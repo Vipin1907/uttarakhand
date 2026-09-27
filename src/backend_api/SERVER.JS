@@ -552,11 +552,12 @@ app.post("/api/admin/broadcast", (req, res) => {
 });
 
 // -----------------------------------------------------------
+// -----------------------------------------------------------
 // 7. IoT Telemetry Proxy Routes (ESP32 Node Ingestion & Polling)
 // -----------------------------------------------------------
 const IOT_TELEMETRY_URL = process.env.IOT_TELEMETRY_URL || "http://localhost:5000/api/iot-telemetry";
 
-app.post("/api/iot/readings", async (req, res) => {
+app.post(["/api/iot/readings", "/api/iot-telemetry"], async (req, res) => {
   try {
     const pythonResp = await axios.post(IOT_TELEMETRY_URL, req.body, { timeout: 3000 });
     return res.status(pythonResp.status).json(pythonResp.data);
@@ -569,7 +570,7 @@ app.post("/api/iot/readings", async (req, res) => {
   }
 });
 
-app.get("/api/iot/latest", async (req, res) => {
+app.get(["/api/iot/latest", "/api/iot-telemetry"], async (req, res) => {
   try {
     const pythonResp = await axios.get(IOT_TELEMETRY_URL, { timeout: 3000 });
     return res.status(pythonResp.status).json(pythonResp.data);
@@ -609,6 +610,36 @@ app.post("/api/predict/compare", async (req, res) => {
       message: "Comparison engine failed on master backend",
       details: err.message
     });
+  }
+});
+
+// -----------------------------------------------------------
+// 8. Dam & Reservoir Intelligence Proxy Routes
+// -----------------------------------------------------------
+app.get("/api/dams/status", async (req, res) => {
+  try {
+    const pythonResp = await axios.get("http://localhost:5000/api/dams/status", { timeout: 4000 });
+    return res.status(pythonResp.status).json(pythonResp.data);
+  } catch (err) {
+    return res.status(502).json({ status: "error", message: "Dam engine unavailable", details: err.message });
+  }
+});
+
+app.post("/api/dams/simulate-scenario", async (req, res) => {
+  try {
+    const pythonResp = await axios.post("http://localhost:5000/api/dams/simulate-scenario", req.body, { timeout: 5000 });
+    return res.status(pythonResp.status).json(pythonResp.data);
+  } catch (err) {
+    return res.status(502).json({ status: "error", message: "Dam simulation unavailable", details: err.message });
+  }
+});
+
+app.post("/api/dams/analyze-vision", async (req, res) => {
+  try {
+    const pythonResp = await axios.post("http://localhost:5000/api/dams/analyze-vision", req.body, { timeout: 6000 });
+    return res.status(pythonResp.status).json(pythonResp.data);
+  } catch (err) {
+    return res.status(502).json({ status: "error", message: "Dam vision detector unavailable", details: err.message });
   }
 });
 

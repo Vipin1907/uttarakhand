@@ -84,8 +84,8 @@ def main():
     parser = argparse.ArgumentParser(description="Trinetra AI ESP32 Hardware Simulator")
     parser.add_argument("--url", default=DEFAULT_BACKEND_URL, help="Backend or Gateway URL")
     parser.add_argument("--scenario", default=None, choices=["1", "2", "3"], help="Scenario 1=Dry, 2=Spray, 3=Flash Flood")
-    parser.add_argument("--continuous", action="store_true", help="Send stream every 2.5 seconds")
-    parser.add_argument("--interval", type=float, default=2.5, help="Interval in seconds for continuous stream")
+    parser.add_argument("--once", action="store_true", help="Send only one telemetry packet instead of continuous streaming")
+    parser.add_argument("--interval", type=float, default=2.0, help="Interval in seconds for continuous stream (default: 2.0s)")
     args = parser.parse_args()
 
     print("=" * 60)
@@ -93,28 +93,13 @@ def main():
     print("=" * 60)
     print(f"Target Server Endpoint: {args.url}")
 
-    scenario_choice = args.scenario
-    if not scenario_choice:
-        print("\nSelect Simulation Scenario:")
-        for k, v in SCENARIOS.items():
-            print(f"  [{k}] {v['name']} — {v['description']}")
-        scenario_choice = input("\nEnter choice (1/2/3) [default 3]: ").strip() or "3"
-
-    print(f"\n🚀 Activated Scenario: {SCENARIOS.get(scenario_choice, SCENARIOS['3'])['name']}")
+    scenario_choice = args.scenario or "3"
+    print(f"🚀 Activated Scenario [{scenario_choice}]: {SCENARIOS.get(scenario_choice, SCENARIOS['3'])['name']}")
+    print(f"   (Tip: Pass --scenario 1 or --scenario 2 to change simulation mode)")
     
-    if args.continuous:
-        print(f"Streaming live telemetry every {args.interval}s. Press Ctrl+C to stop.\n")
-        while True:
-            payload = generate_telemetry(scenario_choice)
-            status, res = transmit(args.url, payload)
-            if status:
-                print(f"[🟢 SENT {status}] RainADC={payload['raw_rain']} WaterADC={payload['raw_water_level']} SoilADC={payload['raw_soil']} Temp={payload['temperature']}°C -> Response: {res[:80]}")
-            else:
-                print(f"[🔴 FAILED] Server unreachable at {args.url} ({res})")
-            time.sleep(args.interval)
-    else:
+    if args.once:
         payload = generate_telemetry(scenario_choice)
-        print("\nPayload to transmit:")
+        print("\nPayload to transmit (Single Packet):")
         print(json.dumps(payload, indent=2))
         print("\nTransmitting to server...")
         status, res = transmit(args.url, payload)
@@ -122,6 +107,19 @@ def main():
             print(f"✅ Success (HTTP {status}): {res}")
         else:
             print(f"⚠️ Note: Server connection failed ({res}). Make sure backend (:5000) or gateway (:3000) is running.")
+    else:
+        print(f"⚡ Streaming live telemetry every {args.interval}s (Status: Active). Press Ctrl+C to stop.\n")
+        try:
+            while True:
+                payload = generate_telemetry(scenario_choice)
+                status, res = transmit(args.url, payload)
+                if status:
+                    print(f"[🟢 SENT {status}] RainADC={payload['raw_rain']} WaterADC={payload['raw_water_level']} SoilADC={payload['raw_soil']} Temp={payload['temperature']}°C")
+                else:
+                    print(f"[🔴 FAILED] Server unreachable at {args.url} ({res})")
+                time.sleep(args.interval)
+        except KeyboardInterrupt:
+            print("\n🛑 Telemetry streaming stopped by user.")
 
 if __name__ == "__main__":
     main()

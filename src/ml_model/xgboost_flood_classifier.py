@@ -57,6 +57,11 @@ class FlashFloodMLModel:
         flow = features.get("flow_accumulation", 1000.0)
         ndvi = features.get("ndvi", 0.65)
 
+        # Dam & Reservoir Telemetry Context
+        outflow_cusecs = features.get("outflow_cusecs", 0.0)
+        downstream_stage = features.get("downstream_river_stage", 0.0)
+        structural_warning = features.get("dam_structural_warning", False)
+
         # Hydro-physical scaling factors
         s_r1 = min(r1d / 100.0, 1.0)
         s_r3 = min(r3d / 200.0, 1.0)
@@ -65,6 +70,10 @@ class FlashFloodMLModel:
         s_slope = min(slope / 45.0, 1.0)
         s_flow = min(flow / 10000.0, 1.0)
         s_ndvi = max(1.0 - ndvi, 0.0)
+
+        # Dam discharge surge scaling
+        s_dam_outflow = min(outflow_cusecs / 45000.0, 1.0) if outflow_cusecs > 0 else 0.0
+        s_river_stage = min(downstream_stage / 10.0, 1.0) if downstream_stage > 0 else 0.0
 
         # Antecedent Moisture Logic based on Assam (450mm) and Uttarakhand (250mm + steep)
         if r10d < 50.0:
@@ -76,8 +85,12 @@ class FlashFloodMLModel:
         else:
             antecedent_moisture_multiplier = 1.0 + (s_r10 * s_soil * 0.4)
 
-        # Compound risk multiplier
+        # Compound risk multiplier with dam discharge interaction
         compound_multiplier = antecedent_moisture_multiplier + (s_slope * s_r1 * 0.3)
+        if s_dam_outflow > 0.4:
+            compound_multiplier += (s_dam_outflow * 0.6) + (s_river_stage * 0.3)
+        if structural_warning:
+            compound_multiplier += 0.5
 
         raw_score = (
             s_r1 * self.weights["rainfall_1d"] +
@@ -86,7 +99,8 @@ class FlashFloodMLModel:
             s_soil * self.weights["soil_saturation_proxy"] +
             s_slope * self.weights["slope_mean"] +
             s_flow * self.weights["flow_accumulation"] +
-            s_ndvi * self.weights["ndvi"]
+            s_ndvi * self.weights["ndvi"] +
+            (s_dam_outflow * 0.35)
         ) * compound_multiplier
 
         probability = float(min(round(raw_score, 3), 0.99))
@@ -105,6 +119,8 @@ class FlashFloodMLModel:
             "flow_accumulation": round(s_flow * self.weights["flow_accumulation"], 3),
             "ndvi": round(s_ndvi * self.weights["ndvi"], 3),
         }
+        if outflow_cusecs > 0:
+            importances["dam_outflow_cusecs"] = round(s_dam_outflow * 0.35 * compound_multiplier, 3)
 
         return probability, confidence, importances
 

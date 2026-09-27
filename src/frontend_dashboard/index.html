@@ -54,6 +54,18 @@
         <span class="d-badge">AI</span>
       </a>
 
+      <a href="/#dam-intelligence" class="drawer-item" data-target="dam-intelligence">
+        <i class="fa-solid fa-water"></i>
+        <span>Dam Intelligence</span>
+        <span class="d-badge" style="background: #0ea5e9;">OPENCV</span>
+      </a>
+
+      <a href="/#prediction" class="drawer-item" id="drawer-goto-iot" onclick="setTimeout(() => { document.querySelector('.wf-iot-section')?.scrollIntoView({behavior:'smooth'}); }, 350);">
+        <i class="fa-solid fa-microchip" style="color: #fb923c;"></i>
+        <span>ESP32 IoT Node</span>
+        <span class="d-badge" style="background: #ea580c;">HARDWARE</span>
+      </a>
+
       <!-- ── ABOUT SECTIONS ── -->
       <div class="drawer-section-label">ABOUT</div>
 
@@ -131,6 +143,7 @@
         <a href="/#ml-model">ML Model</a>
         <a href="/#agentic-ai">Agentic AI</a>
         <a href="/#past-events">Past Events</a>
+        <a href="/#prediction" onclick="setTimeout(() => { document.querySelector('.wf-iot-section')?.scrollIntoView({behavior:'smooth'}); }, 350);" style="color: #fb923c; font-weight: 600;"><i class="fa-solid fa-microchip" style="margin-right: 4px;"></i>IoT Node</a>
       </nav>
 
       <div class="nav-actions">
@@ -174,6 +187,10 @@
         <label class="mode-radio-label" id="label-mode-tourist">
           <input type="radio" name="app_mode" value="tourist" onchange="toggleAppMode(this.value)">
           <i class="fa-solid fa-person-walking-luggage"></i> Citizen / Tourist Safe-Zone
+        </label>
+        <label class="mode-radio-label" id="label-mode-dam">
+          <input type="radio" name="app_mode" value="dam" onchange="toggleAppMode(this.value)">
+          <i class="fa-solid fa-water"></i> Dam Hydro Command
         </label>
       </div>
     </div>
@@ -1227,6 +1244,17 @@
         <span class="wfs-step"><i class="fa-solid fa-shield-halved"></i> 3. AI Flood Risk &amp; Evacuation Plan</span>
       </div>
 
+      <!-- Quick Telemetry View Switcher / Quick Jump -->
+      <div class="wf-quick-jump-strip" style="display: flex; gap: 12px; margin: 15px 0 22px; flex-wrap: wrap; align-items: center; justify-content: center; background: rgba(15,23,42,0.65); padding: 10px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 4px 16px rgba(0,0,0,0.25);">
+        <span style="font-size: 13px; color: #94a3b8; font-weight: 600;"><i class="fa-solid fa-compass"></i> Section Shortcuts:</span>
+        <button type="button" onclick="document.querySelector('.live-weather-table-card')?.scrollIntoView({behavior:'smooth'});" style="padding: 7px 15px; border-radius: 8px; background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; color: #93c5fd; font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
+          <i class="fa-solid fa-cloud-sun"></i> Weather API &amp; Satellite Forecast
+        </button>
+        <button type="button" onclick="document.querySelector('.wf-iot-section')?.scrollIntoView({behavior:'smooth'});" style="padding: 7px 15px; border-radius: 8px; background: rgba(249, 115, 22, 0.25); border: 1px solid #f97316; color: #fb923c; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
+          <i class="fa-solid fa-microchip"></i> ESP32 IoT Ground Node Telemetry <span style="background: #ea580c; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 800; letter-spacing: 0.5px;">LIVE HARDWARE</span>
+        </button>
+      </div>
+
       <section class="live-weather-table-card" aria-labelledby="live-weather-title">
         <div class="live-weather-table-head">
           <div>
@@ -1920,6 +1948,154 @@
     </div>
   </div>
 
+
+  <!-- ─── DAM & RESERVOIR HYDRO COMMAND VIEW ─── -->
+  <div id="dam-view" style="display: none; max-width: 1400px; margin: 32px auto; padding: 0 24px;">
+    <section class="dam-intelligence-section" id="dam-intelligence" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(14, 165, 233, 0.4); border-radius: 16px; padding: 24px; color: #f8fafc;">
+      <div class="dam-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 16px; margin-bottom: 24px;">
+        <div>
+          <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">
+            <i class="fa-solid fa-water"></i> OPENCV &amp; HYDRO SENSOR FUSION ENGINE
+          </div>
+          <h2 style="font-size: 1.6rem; font-weight: 800; margin-top: 8px; color: #ffffff;">Dam &amp; Reservoir Intelligence Command</h2>
+          <p style="font-size: 0.9rem; color: #94a3b8; margin: 4px 0 0 0;">Real-time Telemetry, Structural Crack Vision Inspection, and Flood Wave Lead-Time Propagation</p>
+        </div>
+        <button id="btn-refresh-dams" class="btn-refresh" style="background: #0ea5e9; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh Dam Telemetry
+        </button>
+      </div>
+
+      <!-- 6 Dam Selector Pills -->
+      <div class="dam-selector-row" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 20px;">
+        <button class="dam-pill-btn active" data-dam="DAM_TEHRI" style="padding: 8px 16px; border-radius: 20px; background: #0284c7; color: #fff; border: none; cursor: pointer; font-weight: 600;">Tehri Dam (Uttarakhand)</button>
+        <button class="dam-pill-btn" data-dam="DAM_TAPOVAN" style="padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.08); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.15); cursor: pointer;">Tapovan Vishnugad</button>
+        <button class="dam-pill-btn" data-dam="DAM_MANERI" style="padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.08); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.15); cursor: pointer;">Maneri Bhali</button>
+        <button class="dam-pill-btn" data-dam="DAM_RANGANADI" style="padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.08); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.15); cursor: pointer;">Ranganadi Project (Assam)</button>
+        <button class="dam-pill-btn" data-dam="DAM_SUBANSIRI" style="padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.08); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.15); cursor: pointer;">Subansiri Lower</button>
+        <button class="dam-pill-btn" data-dam="DAM_KURICHHU" style="padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.08); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.15); cursor: pointer;">Kurichhu Dam</button>
+      </div>
+
+      <!-- Main Grid: Left Status Cards & Right OpenCV Sandbox -->
+      <div class="dam-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+
+        <!-- Left Column: Dual Telemetry & What-If Sliders -->
+        <div class="dam-telemetry-col" style="display: flex; flex-direction: column; gap: 20px;">
+
+          <!-- Dual Cards -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <!-- Card 1: Hydrological Telemetry -->
+            <div class="dam-card" style="background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+              <div style="color: #38bdf8; font-weight: 700; font-size: 0.85rem; margin-bottom: 8px;"><i class="fa-solid fa-gauge-high"></i> HYDROLOGICAL TELEMETRY</div>
+              <div id="dam-name-disp" style="font-weight: 800; font-size: 1.1rem; color: #fff;">Tehri Dam</div>
+              <div style="font-size: 0.8rem; color: #94a3b8;" id="dam-river-disp">Bhagirathi River (Uttarakhand)</div>
+              <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
+                <div style="display: flex; justify-content: space-between;"><span>Storage Level:</span><strong id="dam-storage-disp">82.4% (818.5m)</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>Inflow Discharge:</span><strong id="dam-inflow-disp" style="color:#34d399;">28,500 Cusecs</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>Outflow Release:</span><strong id="dam-outflow-disp" style="color:#fb923c;">22,000 Cusecs</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>Spillway Gates:</span><strong id="dam-gates-disp">3 / 8 Open</strong></div>
+              </div>
+            </div>
+
+            <!-- Card 2: Structural Inspection (OpenCV Status) -->
+            <div class="dam-card" style="background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+              <div style="color: #f43f5e; font-weight: 700; font-size: 0.85rem; margin-bottom: 8px;"><i class="fa-solid fa-eye"></i> STRUCTURAL HEALTH (OPENCV)</div>
+              <div id="dam-struct-status" style="font-weight: 800; font-size: 1.1rem; color: #34d399;">STATUS: NORMAL</div>
+              <div style="font-size: 0.8rem; color: #94a3b8;">Concrete Crack &amp; Seepage Monitoring</div>
+              <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
+                <div style="display: flex; justify-content: space-between;"><span>Est. Crack Width:</span><strong id="dam-crack-disp">1.2 mm</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>Seepage Rate:</span><strong id="dam-seepage-disp">4.5 L/sec</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>Vibration Frequency:</span><strong id="dam-vib-disp">0.08 Hz</strong></div>
+                <div style="display: flex; justify-content: space-between;"><span>Inspection Rating:</span><strong style="color: #38bdf8;">SAFE (GRADE A)</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- What-If Scenario Sliders (Viva Demo Box) -->
+          <div style="background: rgba(15, 23, 42, 0.9); border: 1px dashed rgba(56, 189, 248, 0.5); border-radius: 12px; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-weight: 700; color: #38bdf8; font-size: 0.9rem;"><i class="fa-solid fa-sliders"></i> VIVA DEMO: WHAT-IF DISCHARGE SIMULATOR</span>
+              <span id="dam-sim-badge" style="background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">LIVE SIMULATOR</span>
+            </div>
+
+            <!-- Slider 1: Outflow Cusecs -->
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+                <span>Outflow Release Discharge (Cusecs):</span>
+                <strong id="slider-outflow-val" style="color: #fb923c;">35,000 Cusecs</strong>
+              </div>
+              <input type="range" id="dam-slider-outflow" min="10000" max="60000" step="1000" value="35000" style="width: 100%; cursor: pointer;">
+            </div>
+
+            <!-- Slider 2: Gates Open -->
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+                <span>Spillway Gates Open:</span>
+                <strong id="slider-gates-val" style="color: #38bdf8;">4 Gates</strong>
+              </div>
+              <input type="range" id="dam-slider-gates" min="1" max="8" step="1" value="4" style="width: 100%; cursor: pointer;">
+            </div>
+
+            <!-- Simulation Result Banner -->
+            <div id="dam-sim-result-box" style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 8px; padding: 12px; margin-top: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <div style="font-size: 0.8rem; color: #fca5a5;">Combined Flash Flood Risk:</div>
+                  <div id="sim-risk-pct" style="font-size: 1.4rem; font-weight: 900; color: #ef4444;">88.5% (HIGH EMERGENCY)</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 0.8rem; color: #94a3b8;">Evacuation Lead-Time Window:</div>
+                  <div id="sim-lead-time" style="font-size: 1.1rem; font-weight: 800; color: #38bdf8;">4.0 to 5.5 Hours</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Column: OpenCV Vision Inspection Sandbox -->
+        <div class="dam-opencv-col" style="background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="font-weight: 800; color: #f43f5e; font-size: 1rem;"><i class="fa-solid fa-camera"></i> OPENCV CRACK INSPECTION SANDBOX</span>
+              <span style="background: rgba(244, 63, 94, 0.2); color: #f43f5e; border: 1px solid #f43f5e; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">CANNY EDGE &amp; CONTOUR</span>
+            </div>
+            <p style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 16px;">Test concrete surface wall photos using Canny Edge Detection &amp; Contour Bounding Box extraction.</p>
+
+            <!-- Image Display Canvas Box -->
+            <div style="width: 100%; min-height: 200px; height: 220px; background: #0f172a; border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+              <img id="opencv-output-img" src="" alt="OpenCV Vision Output" style="max-width: 100%; max-height: 100%; display: none; object-fit: contain;">
+              <div id="opencv-placeholder" style="text-align: center; color: #64748b;">
+                <i class="fa-solid fa-microscope" style="font-size: 2.5rem; margin-bottom: 8px;"></i>
+                <div>Click 'Run OpenCV Inspection' below</div>
+              </div>
+            </div>
+
+            <!-- OpenCV Result Metrics -->
+            <div id="opencv-metrics-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 16px; font-size: 0.8rem; text-align: center;">
+              <div style="background: rgba(15, 23, 42, 0.8); padding: 8px; border-radius: 6px;">
+                <span style="color: #94a3b8; display: block;">Cracks Detected:</span>
+                <strong id="cv-crack-count" style="color: #fff;">-</strong>
+              </div>
+              <div style="background: rgba(15, 23, 42, 0.8); padding: 8px; border-radius: 6px;">
+                <span style="color: #94a3b8; display: block;">Max Width (mm):</span>
+                <strong id="cv-max-width" style="color: #fb923c;">-</strong>
+              </div>
+              <div style="background: rgba(15, 23, 42, 0.8); padding: 8px; border-radius: 6px;">
+                <span style="color: #94a3b8; display: block;">Status Rating:</span>
+                <strong id="cv-status-badge" style="color: #34d399;">-</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <button id="btn-run-opencv" style="margin-top: 16px; background: linear-gradient(135deg, #f43f5e, #e11d48); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fa-solid fa-play"></i> Run OpenCV Wall Crack Inspection
+          </button>
+        </div>
+
+      </div>
+    </section>
+  </div>
 
   <!-- ─── TOURIST / CITIZEN SAFE-ZONE VIEW ─── -->
   <div id="tourist-view" style="display: none;">

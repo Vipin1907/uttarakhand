@@ -2117,24 +2117,61 @@ let touristMapInstance = null;
 
 window.toggleAppMode = function(mode) {
   const touristView = document.getElementById("tourist-view");
+  const damView = document.getElementById("dam-view");
+  const damSection = document.getElementById("dam-intelligence");
   const authLabel = document.getElementById("label-mode-auth");
   const touristLabel = document.getElementById("label-mode-tourist");
+  const damLabel = document.getElementById("label-mode-dam");
 
-  // Elements to hide in tourist mode
   const home = document.getElementById("home");
   const wfPanel = document.getElementById("weather-forecast-panel");
   const resPanel = document.getElementById("results-panel");
-  const navDrawer = document.getElementById("nav-drawer"); // if exists
 
-  if (mode === "tourist") {
+  // All authority-mode content sections that must be hidden in dam/tourist modes
+  const authoritySections = [
+    document.getElementById("how-it-works"),
+    document.getElementById("ml-model"),
+    document.getElementById("agentic-ai"),
+    document.getElementById("past-events"),
+    document.getElementById("prediction")
+  ];
+
+  // Reset active indicator classes
+  [authLabel, touristLabel, damLabel].forEach(lbl => lbl?.classList.remove("active"));
+
+  if (mode === "dam") {
+    // Hide all authority content
     if (home) home.style.display = "none";
     if (wfPanel) wfPanel.style.display = "none";
     if (resPanel) resPanel.style.display = "none";
-    if (navDrawer) navDrawer.style.display = "none";
+    if (touristView) touristView.style.display = "none";
+    authoritySections.forEach(sec => { if (sec) sec.style.display = "none"; });
+
+    // Show dam view
+    if (damView) damView.style.display = "block";
+    if (damSection) {
+      damSection.style.display = "block";
+      damSection.classList.remove("hidden");
+    }
+    if (damLabel) damLabel.classList.add("active");
+
+    if (window.fetchDamsTelemetry) {
+      window.fetchDamsTelemetry();
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+  } else if (mode === "tourist") {
+    // Hide all authority content + dam
+    if (home) home.style.display = "none";
+    if (wfPanel) wfPanel.style.display = "none";
+    if (resPanel) resPanel.style.display = "none";
+    if (damView) damView.style.display = "none";
+    if (damSection) damSection.style.display = "none";
+    authoritySections.forEach(sec => { if (sec) sec.style.display = "none"; });
     
-    touristView.style.display = "block";
-    authLabel.classList.remove("active");
-    touristLabel.classList.add("active");
+    // Show tourist view
+    if (touristView) touristView.style.display = "block";
+    if (touristLabel) touristLabel.classList.add("active");
     
     // Initialize or resize map
     if (!touristMapInstance) {
@@ -2154,16 +2191,31 @@ window.toggleAppMode = function(mode) {
       }
     }
     setTimeout(() => { touristMapInstance.invalidateSize(); }, 300);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
   } else {
-    // Restore logic relies on app.js normal state
-    if (home && !home.classList.contains("hidden")) home.style.display = "block";
-    if (wfPanel && !wfPanel.classList.contains("hidden")) wfPanel.style.display = "block";
-    if (resPanel && !resPanel.classList.contains("hidden")) resPanel.style.display = "block";
-    if (navDrawer) navDrawer.style.display = "";
+    // Default: "authority" / B2B Command Mode — restore everything
+    if (home) home.style.display = "block";
     
-    touristView.style.display = "none";
-    authLabel.classList.add("active");
-    touristLabel.classList.remove("active");
+    if (wfPanel && !wfPanel.classList.contains("hidden")) {
+      wfPanel.style.display = "block";
+    } else if (wfPanel) {
+      wfPanel.style.display = "none";
+    }
+    if (resPanel && !resPanel.classList.contains("hidden")) {
+      resPanel.style.display = "block";
+    } else if (resPanel) {
+      resPanel.style.display = "none";
+    }
+    
+    // Re-show all authority content sections
+    authoritySections.forEach(sec => { if (sec) sec.style.display = ""; });
+    
+    // Hide dam & tourist views
+    if (touristView) touristView.style.display = "none";
+    if (damView) damView.style.display = "none";
+    if (damSection) damSection.style.display = "none";
+    if (authLabel) authLabel.classList.add("active");
   }
 };
 
@@ -2242,3 +2294,185 @@ if (window.location.hash) {
     }
   }, 300);
 }
+
+/* -------------------------------------------------
+   15. DAM & RESERVOIR INTELLIGENCE MODULE HANDLERS
+   ------------------------------------------------- */
+let currentDamId = "DAM_TEHRI";
+let damsCache = {};
+
+async function fetchDamsTelemetry() {
+  try {
+    const res = await fetch("http://localhost:5000/api/dams/status");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.dams && data.dams.length > 0) {
+        data.dams.forEach(d => { damsCache[d.id] = d; });
+        updateDamUI(currentDamId);
+      }
+    }
+  } catch (err) {
+    console.warn("Dam Telemetry API offline, using fallback state.", err);
+  }
+}
+window.fetchDamsTelemetry = fetchDamsTelemetry;
+
+function updateDamUI(damId) {
+  currentDamId = damId;
+  const dam = damsCache[damId] || {
+    name: "Tehri Dam",
+    river: "Bhagirathi",
+    state: "Uttarakhand",
+    current_storage_pct: 82.4,
+    current_level_m: 818.5,
+    inflow_cusecs: 28500,
+    outflow_cusecs: 22000,
+    spillway_gates_open: 3,
+    spillway_gates_total: 8,
+    structural_health: { crack_width_mm: 1.2, seepage_rate_lps: 4.5, vibration_hz: 0.08, structural_status: "NORMAL" }
+  };
+
+  const nameEl = document.getElementById("dam-name-disp");
+  const riverEl = document.getElementById("dam-river-disp");
+  const storageEl = document.getElementById("dam-storage-disp");
+  const inflowEl = document.getElementById("dam-inflow-disp");
+  const outflowEl = document.getElementById("dam-outflow-disp");
+  const gatesEl = document.getElementById("dam-gates-disp");
+  const structEl = document.getElementById("dam-struct-status");
+  const crackEl = document.getElementById("dam-crack-disp");
+  const seepageEl = document.getElementById("dam-seepage-disp");
+  const vibEl = document.getElementById("dam-vib-disp");
+
+  if (nameEl) nameEl.textContent = dam.name;
+  if (riverEl) riverEl.textContent = `${dam.river} River (${dam.state})`;
+  if (storageEl) storageEl.textContent = `${dam.current_storage_pct}% (${dam.current_level_m}m)`;
+  if (inflowEl) inflowEl.textContent = `${Number(dam.inflow_cusecs).toLocaleString()} Cusecs`;
+  if (outflowEl) outflowEl.textContent = `${Number(dam.outflow_cusecs).toLocaleString()} Cusecs`;
+  if (gatesEl) gatesEl.textContent = `${dam.spillway_gates_open} / ${dam.spillway_gates_total} Open`;
+
+  const sh = dam.structural_health || {};
+  if (structEl) {
+    structEl.textContent = `STATUS: ${sh.structural_status || 'NORMAL'}`;
+    structEl.style.color = sh.structural_status === "WARNING" ? "#ef4444" : (sh.structural_status === "WATCH" ? "#fb923c" : "#34d399");
+  }
+  if (crackEl) crackEl.textContent = `${sh.crack_width_mm || 1.2} mm`;
+  if (seepageEl) seepageEl.textContent = `${sh.seepage_rate_lps || 4.5} L/sec`;
+  if (vibEl) vibEl.textContent = `${sh.vibration_hz || 0.08} Hz`;
+
+  // Update slider default values
+  const sliderOutflow = document.getElementById("dam-slider-outflow");
+  const sliderGates = document.getElementById("dam-slider-gates");
+  if (sliderOutflow) sliderOutflow.value = dam.outflow_cusecs;
+  if (sliderGates) sliderGates.value = dam.spillway_gates_open;
+  triggerDamSimulation();
+}
+
+async function triggerDamSimulation() {
+  const sliderOutflow = document.getElementById("dam-slider-outflow");
+  const sliderGates = document.getElementById("dam-slider-gates");
+  const outflowVal = document.getElementById("slider-outflow-val");
+  const gatesVal = document.getElementById("slider-gates-val");
+  const riskPctEl = document.getElementById("sim-risk-pct");
+  const leadTimeEl = document.getElementById("sim-lead-time");
+
+  if (!sliderOutflow) return;
+  const outflow = parseFloat(sliderOutflow.value);
+  const gates = parseInt(sliderGates.value);
+
+  if (outflowVal) outflowVal.textContent = `${Number(outflow).toLocaleString()} Cusecs`;
+  if (gatesVal) gatesVal.textContent = `${gates} Gates`;
+
+  try {
+    const res = await fetch("http://localhost:5000/api/dams/simulate-scenario", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dam_id: currentDamId, outflow_cusecs: outflow, gates_open: gates, downstream_stage_m: 4.5 })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const sim = data.simulation;
+      if (riskPctEl) riskPctEl.textContent = `${sim.combined_risk_pct}% (${sim.combined_risk_pct >= 75 ? 'HIGH EMERGENCY' : 'MODERATE RISK'})`;
+      if (leadTimeEl) leadTimeEl.textContent = sim.lead_time_window;
+      return;
+    }
+  } catch (e) {
+    // Fallback calculation
+  }
+
+  const baseRisk = Math.min(99, Math.round((outflow / 50000) * 85));
+  if (riskPctEl) riskPctEl.textContent = `${baseRisk}% (${baseRisk >= 75 ? 'HIGH EMERGENCY' : 'MODERATE RISK'})`;
+  if (leadTimeEl) leadTimeEl.textContent = `${(65 / (14 * Math.pow(outflow / 20000, 0.35) * 1.2)).toFixed(1)} to ${(65 / (14 * Math.pow(outflow / 20000, 0.35) * 0.85)).toFixed(1)} Hours`;
+}
+
+async function runOpencvWallInspection() {
+  const imgEl = document.getElementById("opencv-output-img");
+  const placeholder = document.getElementById("opencv-placeholder");
+  const countEl = document.getElementById("cv-crack-count");
+  const widthEl = document.getElementById("cv-max-width");
+  const badgeEl = document.getElementById("cv-status-badge");
+  const btn = document.getElementById("btn-run-opencv");
+
+  if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing OpenCV Canny Edge...`;
+
+  try {
+    const res = await fetch("http://localhost:5000/api/dams/analyze-vision", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({})
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const ca = data.crack_analysis;
+      if (ca.annotated_image_base64 && imgEl) {
+        imgEl.src = ca.annotated_image_base64;
+        imgEl.style.display = "block";
+        if (placeholder) placeholder.style.display = "none";
+      }
+      if (countEl) countEl.textContent = ca.detected_count;
+      if (widthEl) widthEl.textContent = `${ca.max_crack_width_mm} mm`;
+      if (badgeEl) {
+        badgeEl.textContent = ca.status;
+        badgeEl.style.color = ca.status === "WARNING" ? "#ef4444" : (ca.status === "WATCH" ? "#fb923c" : "#34d399");
+      }
+    }
+  } catch (err) {
+    console.error("OpenCV Inspection API error:", err);
+  } finally {
+    if (btn) btn.innerHTML = `<i class="fa-solid fa-play"></i> Run OpenCV Wall Crack Inspection`;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  fetchDamsTelemetry();
+
+  // Dam selector pills
+  const damPills = document.querySelectorAll(".dam-pill-btn");
+  damPills.forEach(pill => {
+    pill.addEventListener("click", () => {
+      damPills.forEach(p => p.classList.remove("active"));
+      pill.classList.add("active");
+      const targetDam = pill.getAttribute("data-dam");
+      updateDamUI(targetDam);
+    });
+  });
+
+  // Sliders
+  const sliderOutflow = document.getElementById("dam-slider-outflow");
+  const sliderGates = document.getElementById("dam-slider-gates");
+  sliderOutflow?.addEventListener("input", triggerDamSimulation);
+  sliderGates?.addEventListener("input", triggerDamSimulation);
+
+  // OpenCV Button
+  document.getElementById("btn-run-opencv")?.addEventListener("click", runOpencvWallInspection);
+  document.getElementById("btn-refresh-dams")?.addEventListener("click", fetchDamsTelemetry);
+
+  // Drawer link for dam intelligence
+  document.querySelector('[data-target="dam-intelligence"]')?.addEventListener("click", (e) => {
+    e.preventDefault();
+    const radioDam = document.getElementById("label-mode-dam")?.querySelector("input");
+    if (radioDam) radioDam.checked = true;
+    window.toggleAppMode("dam");
+    document.getElementById("sidebar-drawer")?.classList.remove("open");
+    document.getElementById("drawer-overlay")?.classList.add("hidden");
+  });
+});
