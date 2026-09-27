@@ -1209,7 +1209,7 @@ pollIotTelemetry();
 document.addEventListener("DOMContentLoaded", () => {
   // These workflow panels and modals must live outside the home section. Moving them at
   // startup prevents a hidden home section from also hiding the forecast view or modal popups.
-  ["weather-forecast-panel", "results-panel", "compare-modal", "cap-modal", "simulation-modal", "tourist-view"].forEach((id) => {
+  ["weather-forecast-panel", "results-panel", "compare-modal", "cap-modal", "simulation-modal", "tourist-view", "dam-view"].forEach((id) => {
     const panel = document.getElementById(id);
     if (panel && panel.parentElement !== document.body) document.body.appendChild(panel);
   });
@@ -2148,7 +2148,10 @@ window.toggleAppMode = function(mode) {
     authoritySections.forEach(sec => { if (sec) sec.style.display = "none"; });
 
     // Show dam view
-    if (damView) damView.style.display = "block";
+    if (damView) {
+      damView.style.display = "block";
+      damView.classList.remove("hidden");
+    }
     if (damSection) {
       damSection.style.display = "block";
       damSection.classList.remove("hidden");
@@ -2303,7 +2306,7 @@ let damsCache = {};
 
 async function fetchDamsTelemetry() {
   try {
-    const res = await fetch("http://localhost:5000/api/dams/status");
+    const res = await fetch("/api/dams/status");
     if (res.ok) {
       const data = await res.json();
       if (data.dams && data.dams.length > 0) {
@@ -2383,7 +2386,7 @@ async function triggerDamSimulation() {
   if (gatesVal) gatesVal.textContent = `${gates} Gates`;
 
   try {
-    const res = await fetch("http://localhost:5000/api/dams/simulate-scenario", {
+    const res = await fetch("/api/dams/simulate-scenario", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ dam_id: currentDamId, outflow_cusecs: outflow, gates_open: gates, downstream_stage_m: 4.5 })
@@ -2415,7 +2418,7 @@ async function runOpencvWallInspection() {
   if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Processing OpenCV Canny Edge...`;
 
   try {
-    const res = await fetch("http://localhost:5000/api/dams/analyze-vision", {
+    const res = await fetch("/api/dams/analyze-vision", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({})
