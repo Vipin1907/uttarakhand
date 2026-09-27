@@ -20,7 +20,7 @@
 {"timestamp": "2026-09-05T08:22:28.560366+00:00", "level": "INFO", "agent": "alert_decision", "catchment_id": "catch_007", "event": "|- Waiting for HUMAN APPROVAL (auto-escalate in 15min)"}
 {"timestamp": "2026-09-05T08:22:28.560704+00:00", "level": "INFO", "agent": "alert_decision", "catchment_id": "catch_007", "event": "|_ APPROVED by human", "decision": "approve", "status": "APPROVED_SENT"}
 {"timestamp": "2026-09-05T08:22:28.564319+00:00", "level": "INFO", "agent": "dissemination", "catchment_id": "catch_007", "event": "-- Dissemination Agent START --"}
-{"timestamp": "2026-09-05T08:22:28.566824+00:00", "level": "INFO", "agent": "dissemination", "catchment_id": "catch_007", "event": "|- Alert record saved: C:\\Users\\Aditya Gautam\\Desktop\\PRAVAH FINAL\\SIH_2026_Flash_Flood_Prediction\\src\\data_pipeline\\..\\..\\logs\\alerts\\20260905_135228_catch_007_RED.json"}
+{"timestamp": "2026-09-05T08:22:28.566824+00:00", "level": "INFO", "agent": "dissemination", "catchment_id": "catch_007", "event": "|- Alert record saved: C:\\Users\\Aditya Gautam\\Desktop\\TRINETRA FINAL\\SIH_2026_Flash_Flood_Prediction\\src\\data_pipeline\\..\\..\\logs\\alerts\\20260905_135228_catch_007_RED.json"}
 {"timestamp": "2026-09-05T08:22:28.567194+00:00", "level": "INFO", "agent": "dissemination", "catchment_id": "catch_007", "event": "|- Webhook: SIMULATED (no URL configured)"}
 {"timestamp": "2026-09-05T08:22:28.567448+00:00", "level": "INFO", "agent": "dissemination", "catchment_id": "catch_007", "event": "|- SMS: SIMULATED (3 district collectors would be notified)"}
 {"timestamp": "2026-09-05T08:22:28.569528+00:00", "level": "INFO", "agent": "dissemination", "catchment_id": "catch_007", "event": "|- Audit trail written [OK]"}

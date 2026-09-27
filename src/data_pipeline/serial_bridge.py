@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Pravah AI — USB Data Cable (Serial) to Dashboard Bridge
+Trinetra AI — USB Data Cable (Serial) to Dashboard Bridge
 Reads live JSON telemetry packets from ESP32 via USB COM Port
-and forwards them to the Pravah AI Master Backend (:5000) & Gateway (:3000).
+and forwards them to the Trinetra AI Master Backend (:5000) & Gateway (:3000).
 """
 
 import sys
@@ -71,7 +71,7 @@ def get_risk_percentage():
 
 def main():
     print("=" * 65)
-    print("  🔌 Pravah AI — USB Data Cable (Serial) Bridge")
+    print("  🔌 Trinetra AI — USB Data Cable (Serial) Bridge")
     print("=================================================")
     
     port = find_esp32_port()
@@ -108,7 +108,7 @@ def main():
                     if status == 200:
                         max_risk, flood_risk, landslide_risk = get_risk_percentage()
                         if max_risk is not None:
-                            print(f"[🟢 LIVE HW HTTP {status}] Rain={payload.get('raw_rain')} | Soil={payload.get('raw_soil')} | 🌊 Flood: {flood_risk}% | 🏔️ Landslide: {landslide_risk}% -> 🔴 Sending Max Risk ({max_risk}%) to ESP32")
+                            print(f"[🟢 LIVE HW HTTP {status}] RainADC={payload.get('raw_rain')} | WaterADC={payload.get('raw_water_level')} | SoilADC={payload.get('raw_soil')} | 🌊 Flood: {flood_risk}% | 🏔️ Landslide: {landslide_risk}% -> 🔴 Sending Max Risk ({max_risk}%) to ESP32")
                             ser.write(f"RISK:{max_risk}\n".encode('utf-8'))
                         else:
                             print(f"[🟢 LIVE HW HTTP {status}] RainADC={payload.get('raw_rain')} | WaterADC={payload.get('raw_water_level')} | SoilADC={payload.get('raw_soil')} | Temp={payload.get('temperature')}°C -> Ingested OK")
@@ -118,7 +118,7 @@ def main():
                     pass
             else:
                 # Debug message from ESP32 setup
-                if "Pravah AI" in line or "Reading" in line:
+                if "Trinetra AI" in line or "Reading" in line:
                     print(f"[ESP32 BOOT] {line}")
         except KeyboardInterrupt:
             print("\n🛑 Stopped Serial Bridge.")

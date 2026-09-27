@@ -1,5 +1,5 @@
 /* ==========================================================
-   Pravah AI — Backend API Gateway & Aggregator (Express)
+   Trinetra AI — Backend API Gateway & Aggregator (Express)
    ========================================================== */
 const axios = require("axios");
 const cors = require("cors");
@@ -22,7 +22,7 @@ app.use(express.static(FRONTEND_DIR));
 app.get("/status", (req, res) => {
   res.json({
     status: "online",
-    gateway: "Pravah AI Express Gateway",
+    gateway: "Trinetra AI Express Gateway",
     port: PORT,
     frontend: "Active"
   });
@@ -41,7 +41,7 @@ const EXPLAIN_API_URL = process.env.EXPLAIN_API_URL || "http://localhost:5001/ex
 
 const OPEN_METEO_GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search";
 const OPEN_METEO_FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
-const WEATHER_HEADERS = { "User-Agent": "PravahAI-Weather/1.0 (flood-hazard-monitoring; contact@pravah.ai)" };
+const WEATHER_HEADERS = { "User-Agent": "TrinetraAI-Weather/1.0 (flood-hazard-monitoring; contact@trinetra.ai)" };
 
 const weatherDescription = (code) => ({
   0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
@@ -58,38 +58,32 @@ const nearestHourlyIndex = (times, requestedTime) => {
     Math.abs(new Date(time).getTime() - requested) < Math.abs(new Date(times[best]).getTime() - requested) ? index : best, 0);
 };
 
+const BASIN_GEO_MAP = {
+  "A127": { lat: 24.8333, lon: 92.7789, elev: 48, state: "Assam", district: "Cachar", station: "Barak River (Annapurna Ghat)" },
+  "A042": { lat: 26.3452, lon: 92.6840, elev: 62, state: "Assam", district: "Nagaon", station: "Kopili River (Kampan Ghat)" },
+  "A011": { lat: 27.4833, lon: 94.5833, elev: 104, state: "Assam", district: "Dhemaji", station: "Subansiri River (Gerukamukh)" },
+  "U04":  { lat: 30.5500, lon: 79.3500, elev: 1450, state: "Uttarakhand", district: "Chamoli", station: "Alaknanda River (Joshimath Gauge)" },
+  "U01":  { lat: 30.7300, lon: 78.4500, elev: 1158, state: "Uttarakhand", district: "Uttarkashi", station: "Bhagirathi River (Uttarkashi Gauge)" },
+  "U08":  { lat: 29.3800, lon: 79.4500, elev: 2084, state: "Uttarakhand", district: "Nainital", station: "Kumaon Lake & Gola River Gauge" },
+  "U09":  { lat: 29.9450, lon: 78.1640, elev: 288, state: "Uttarakhand", district: "Haridwar", station: "Ganga River (Har Ki Pauri Gauge)" },
+  "U07":  { lat: 30.2844, lon: 78.9811, elev: 895, state: "Uttarakhand", district: "Rudraprayag", station: "Mandakini River (Rudraprayag Sangam)" }
+};
+
 // Real current weather and hourly forecast. The browser never calls the
 // provider directly, so requests remain consistent and the UI gets one shape.
 app.post("/api/live-weather", async (req, res) => {
   const { area, district, state, date, forecast_time = "00:00", lead_time_hours = 3, basin = "A127" } = req.body || {};
-  const locationQuery = area || district || state || "Assam";
   const horizon = Math.min(Math.max(Number.parseInt(lead_time_hours, 10) || 3, 1), 24);
 
   const fallbackMeta = BASIN_GEO_MAP[basin] || (state === "Assam" ? BASIN_GEO_MAP["A127"] : BASIN_GEO_MAP["U04"]);
 
-  let place = null;
-  try {
-    const geocode = await axios.get(OPEN_METEO_GEOCODING_URL, {
-      params: { name: locationQuery, count: 1, language: "en", format: "json" },
-      headers: WEATHER_HEADERS,
-      timeout: 8000,
-      proxy: false
-    });
-    place = geocode.data?.results?.[0];
-  } catch (geoErr) {
-    console.warn("Geocoding lookup notice:", geoErr.message);
-  }
-
-  // If geocoding failed or returned no match, seamlessly use regional basin coordinates
-  if (!place) {
-    place = {
-      name: area || district || fallbackMeta.station || "Catchment Region",
-      admin1: state || fallbackMeta.state,
-      country: "India",
-      latitude: fallbackMeta.lat,
-      longitude: fallbackMeta.lon
-    };
-  }
+  const place = {
+    name: district || fallbackMeta.district || "Catchment Region",
+    admin1: state || fallbackMeta.state,
+    country: "India",
+    latitude: fallbackMeta.lat,
+    longitude: fallbackMeta.lon
+  };
 
   try {
     const forecast = await axios.get(OPEN_METEO_FORECAST_URL, {
@@ -176,14 +170,7 @@ app.post("/api/live-weather", async (req, res) => {
   }
 });
 
-const BASIN_GEO_MAP = {
-  "A127": { lat: 24.8333, lon: 92.7789, elev: 48, state: "Assam", district: "Cachar", station: "Barak River (Annapurna Ghat)", danger: 19.83, flowArea: 5200, slope: 12.4, elevRange: "22m – 186m MSL (Floodplain)" },
-  "A042": { lat: 26.3452, lon: 92.6840, elev: 62, state: "Assam", district: "Nagaon", station: "Kopili River (Kampan Ghat)", danger: 25.40, flowArea: 3800, slope: 14.2, elevRange: "40m – 320m MSL (Basin Flat)" },
-  "A011": { lat: 27.4833, lon: 94.5833, elev: 104, state: "Assam", district: "Dhemaji", station: "Subansiri River (Gerukamukh)", danger: 38.50, flowArea: 4600, slope: 18.6, elevRange: "80m – 650m MSL (Sub-Himalayan)" },
-  "U04":  { lat: 30.5500, lon: 79.3500, elev: 1450, state: "Uttarakhand", district: "Chamoli", station: "Alaknanda River (Joshimath Gauge)", danger: 325.00, flowArea: 1850, slope: 34.8, elevRange: "680m – 3,850m MSL (Himalayan Gorge)" },
-  "U01":  { lat: 30.7300, lon: 78.4500, elev: 1158, state: "Uttarakhand", district: "Uttarkashi", station: "Bhagirathi River (Uttarkashi Gauge)", danger: 280.00, flowArea: 2100, slope: 38.2, elevRange: "900m – 4,200m MSL (Upper Basin)" },
-  "U07":  { lat: 30.2844, lon: 78.9811, elev: 895, state: "Uttarakhand", district: "Rudraprayag", station: "Mandakini River (Rudraprayag Sangam)", danger: 310.00, flowArea: 1650, slope: 36.5, elevRange: "750m – 3,500m MSL (Catchment Ridge)" }
-};
+
 
 async function getLiveHydroTelemetry(body) {
   const { state = "Assam", district = "Cachar", basin = "A127", area = "" } = body || {};
@@ -443,7 +430,7 @@ app.all("/predict", async (req, res) => {
         probability_percent: 78,
         category: "Very High",
         confidence: 0.88,
-        model_version: "PravahAI-XGBoost-v2"
+        model_version: "TrinetraAI-XGBoost-v2"
       },
       explainable_ai: {
         summary: "Compound flood risk triggered by antecedent rainfall and saturated soil moisture.",
@@ -544,15 +531,15 @@ app.post("/api/get-dashboard-data", async (req, res) => {
 
 app.post("/api/admin/login", (req, res) => {
   const { username, password } = req.body;
-  if (username === "admin" && password === "PravahAdmin@2026") {
-    return res.json({ status: "success", token: "pravah-mock-admin-token-12345" });
+  if (username === "admin" && password === "TrinetraAdmin@2026") {
+    return res.json({ status: "success", token: "trinetra-mock-admin-token-12345" });
   }
   return res.status(401).json({ status: "error", message: "Invalid credentials" });
 });
 
 app.post("/api/admin/broadcast", (req, res) => {
   const { token, message, severity, targetArea } = req.body;
-  if (token !== "pravah-mock-admin-token-12345") {
+  if (token !== "trinetra-mock-admin-token-12345") {
     return res.status(403).json({ status: "error", message: "Unauthorized" });
   }
   
@@ -657,7 +644,7 @@ app.all("/api/simulate", async (req, res) => {
         probability_percent: prob,
         category: cat,
         confidence: 0.90,
-        model_version: "PravahAI-XGBoost-v2-Simulator-Fallback",
+        model_version: "TrinetraAI-XGBoost-v2-Simulator-Fallback",
         risk_color: prob >= 75 ? "#ff4d4f" : prob >= 50 ? "#fa8c16" : prob >= 25 ? "#fadb14" : "#52c41a",
         lead_time_hours: prob >= 75 ? 3 : 6
       },
@@ -679,7 +666,7 @@ app.all("/api/simulate", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`====================================================`);
-  console.log(`✅ Pravah AI Gateway running at http://localhost:${PORT}`);
+  console.log(`✅ Trinetra AI Gateway running at http://localhost:${PORT}`);
   console.log(`   Frontend served from: ${FRONTEND_DIR}`);
   console.log(`   Connected to ML Model, Agentic AI & Routing Engine`);
   console.log(`====================================================`);

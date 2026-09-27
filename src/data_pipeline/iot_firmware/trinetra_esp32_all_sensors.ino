@@ -1,10 +1,9 @@
 /*
  * =====================================================================
- * Pravah AI — ESP32 Cyber-Physical Wi-Fi Node
+ * Trinetra AI — ESP32 Cyber-Physical 4-Sensor Hydrological Node
  * =====================================================================
  * 
- * Works over Wi-Fi (No USB Serial connection needed for data)
- * Uses Custom API to write to SQLite Database
+ * Works with USB Data Cable (Direct Serial) AND Optional Wi-Fi!
  * 
  * 🔌 SENSOR & OUTPUT WIRING:
  * -------------------------------------------------------------
@@ -22,30 +21,19 @@
  * =====================================================================
  */
 
-#include <WiFi.h>
-#include <HTTPClient.h>
 #include <DHT.h>
-#include <ArduinoJson.h> // Ensure you have ArduinoJson library installed
 
 // ==========================================
-// 1. WI-FI CONFIGURATION
+// 1. PIN CONFIGURATION
 // ==========================================
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
-
-// Replace with your Laptop's Local IP Address (e.g., 192.168.1.5)
-const char* SERVER_IP = "192.168.1.100";
-const int SERVER_PORT = 5000;
-
-// ==========================================
-// 2. PIN CONFIGURATION
-// ==========================================
+// Sensor Pins
 #define PIN_RAIN_SENSOR       34   
 #define PIN_WATER_LEVEL       35   
 #define PIN_SOIL_MOISTURE     32   
 #define PIN_DHT               4    
 #define PIN_STATUS_LED        2    
 
+// Indicator Pins (LEDs & Buzzer)
 #define PIN_LED_GREEN         25
 #define PIN_LED_YELLOW        26
 #define PIN_LED_RED           27
@@ -54,11 +42,11 @@ const int SERVER_PORT = 5000;
 #define DHTTYPE DHT11              
 DHT dht(PIN_DHT, DHTTYPE);
 
-const unsigned long TRANSMIT_INTERVAL_MS = 5000; // 5 seconds
+const unsigned long TRANSMIT_INTERVAL_MS = 2000; 
 unsigned long lastTransmitTime = 0;
 
 // Device Metadata
-const char* DEVICE_ID = "ESP32_WIFI_NODE_01";
+const char* DEVICE_ID = "ESP32_DEMO_01";
 const char* LOCATION_NAME = "Subansiri River Basin Gauge Node";
 const char* STATE_NAME = "Assam";
 const char* DISTRICT_NAME = "Dhemaji";
@@ -84,93 +72,61 @@ void setup() {
 
   analogReadResolution(12);
   analogSetAttenuation(ADC_11db); 
+
   dht.begin();
 
   Serial.println("\n=======================================================");
-  Serial.println("  🌊 Pravah AI — ESP32 Wi-Fi Node Starting...");
+  Serial.println("  🌊 Trinetra AI — ESP32 4-Sensor + Alarm Node Ready");
   Serial.println("=======================================================");
-
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting to Wi-Fi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("\n✅ Wi-Fi connected!");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP());
 }
+
+int currentRiskPct = 0;
 
 void loop() {
   unsigned long currentMillis = millis();
   
-  // Transmit Data and Fetch Risk
+  // 1. Send sensor data to Python every 2 seconds
   if (currentMillis - lastTransmitTime >= TRANSMIT_INTERVAL_MS) {
     lastTransmitTime = currentMillis;
-    if(WiFi.status() == WL_CONNECTED){
-      readAndTransmitTelemetry();
-      fetchRiskAndSetAlarms();
-    } else {
-      Serial.println("⚠️ Wi-Fi Disconnected. Reconnecting...");
-      WiFi.reconnect();
+    readAndTransmitTelemetry();
+  }
+
+  // 2. Receive ML Risk Percentage from Python Backend
+  if (Serial.available() > 0) {
+    String incomingMsg = Serial.readStringUntil('\n');
+    incomingMsg.trim();
+    if (incomingMsg.startsWith("RISK:")) {
+      currentRiskPct = incomingMsg.substring(5).toInt();
+      updateIndicatorsByRisk(currentRiskPct);
     }
   }
 }
 
 void updateIndicatorsByRisk(int riskPct) {
+  // Subse pehle saari LEDs aur Buzzer OFF kar do
   digitalWrite(PIN_LED_GREEN, LOW);
   digitalWrite(PIN_LED_YELLOW, LOW);
   digitalWrite(PIN_LED_RED, LOW);
   digitalWrite(PIN_BUZZER, LOW);
 
+  // ML Risk Percentage based logic:
   if (riskPct >= 95) {
+    // 🚨 CRITICAL (Risk 95-100%): Red + Buzzer ON
     digitalWrite(PIN_LED_RED, HIGH);
     digitalWrite(PIN_BUZZER, HIGH); 
   }
   else if (riskPct >= 80) {
+    // 🔴 DANGER (Risk 80-94%): Red LED Only (No Buzzer)
     digitalWrite(PIN_LED_RED, HIGH);
   }
   else if (riskPct >= 40) {
+    // 🟡 WARNING (Risk 40-79%): Yellow LED Only
     digitalWrite(PIN_LED_YELLOW, HIGH);
   } 
   else {
+    // 🟢 SAFE (Risk 0-39%): Green LED Only
     digitalWrite(PIN_LED_GREEN, HIGH);
   }
-}
-
-void fetchRiskAndSetAlarms() {
-  HTTPClient http;
-  String url = String("http://") + SERVER_IP + ":" + SERVER_PORT + "/predict";
-  
-  http.begin(url);
-  http.addHeader("Content-Type", "application/json");
-  
-  String payload = "{\"state\":\"" + String(STATE_NAME) + "\", \"district\":\"" + String(DISTRICT_NAME) + "\", \"basin\":\"" + String(BASIN_CODE) + "\"}";
-  int httpResponseCode = http.POST(payload);
-
-  if (httpResponseCode > 0) {
-    String response = http.getString();
-    
-    // Parse JSON
-    StaticJsonDocument<1024> doc;
-    DeserializationError error = deserializeJson(doc, response);
-    
-    if (!error) {
-      int flood_risk = doc["risk_summary"]["probability_percent"] | 0;
-      int landslide_risk = doc["landslide_risk"]["probability_percent"] | 0;
-      int max_risk = max(flood_risk, landslide_risk);
-      
-      Serial.print("[🟢 ML Response] Risk: ");
-      Serial.print(max_risk);
-      Serial.println("%");
-      
-      updateIndicatorsByRisk(max_risk);
-    }
-  } else {
-    Serial.print("Error on sending POST (Risk): ");
-    Serial.println(httpResponseCode);
-  }
-  http.end();
 }
 
 void readAndTransmitTelemetry() {
@@ -205,22 +161,8 @@ void readAndTransmitTelemetry() {
     rawRain, rawWater, rawSoil, temperature, humidity
   );
 
-  HTTPClient http;
-  String url = String("http://") + SERVER_IP + ":" + SERVER_PORT + "/api/iot-telemetry";
-  http.begin(url);
-  http.addHeader("Content-Type", "application/json");
+  Serial.println(jsonPayload);
 
-  int httpResponseCode = http.POST(jsonPayload);
-  
-  if (httpResponseCode > 0) {
-    Serial.print("[✅ IoT Ingest] DB Stored: ");
-    Serial.println(httpResponseCode);
-  } else {
-    Serial.print("[❌ IoT Error] Code: ");
-    Serial.println(httpResponseCode);
-  }
-  http.end();
-  
   delay(50);
   digitalWrite(PIN_STATUS_LED, LOW);
 }

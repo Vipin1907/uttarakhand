@@ -97,7 +97,7 @@ void readSensors() {
 
   Serial.println("Sensors Updated in Cloud!");
 
-  // Build JSON Payload and send to Local Pravah AI Backend
+  // Build JSON Payload and send to Local Trinetra AI Backend
   char jsonPayload[512];
   snprintf(jsonPayload, sizeof(jsonPayload),
     "{"

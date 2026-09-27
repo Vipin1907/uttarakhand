@@ -1,5 +1,5 @@
 /* ==========================================================
-   Pravah AI — Design System & Styles
+   Trinetra AI — Design System & Styles
    Ultra-modern, pixel-perfect replication of UI mockup
    ========================================================== */
 
@@ -1038,7 +1038,7 @@ body.dark .df-row {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   4. PRAVAH AI FEATURES SECTION (3 Cards)
+   4. TRINETRA AI FEATURES SECTION (3 Cards)
    ───────────────────────────────────────────────────────────── */
 .features-section-wrap {
   margin-top: 50px;
@@ -5216,3 +5216,28 @@ body.dark .mode-radio-label.active { background: #38bdf8; color: #0f172a; }
 body.dark .t-card { background: #0f172a; border-color: #1e293b; }
 body.dark .t-card h3 { color: #f1f5f9; }
 body.dark .t-input { background: #1e293b; border-color: #334155; color: white; }
+
+/* ─────────────────────────────────────────────────────────────
+   INTERACTIVE IOT CALIBRATION & FORMULA GLOW STYLES
+   ───────────────────────────────────────────────────────────── */
+.wfc-formula-box.active-calib {
+  border-color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.18) !important;
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.45);
+  animation: pulseGlowCalib 1.5s infinite alternate;
+}
+
+@keyframes pulseGlowCalib {
+  0% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+  100% { box-shadow: 0 0 22px rgba(16, 185, 129, 0.65); }
+}
+
+.btn-iot-step:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.15);
+}
+
+.iot-preset-btn:hover {
+  filter: brightness(1.2);
+}
+

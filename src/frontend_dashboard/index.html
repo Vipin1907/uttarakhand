@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pravah AI — Flash Flood Intelligence & Early Warning System</title>
+  <title>Trinetra AI — Flash Flood Intelligence & Early Warning System</title>
   <meta name="description" content="AI-powered flash flood prediction, real-time risk mapping, intelligent alerts, and safe route guidance for India." />
 
   <!-- Fonts -->
@@ -11,8 +11,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
 
-  <!-- Leaflet -->
+  <!-- Leaflet & Heat Plugin -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -30,7 +32,7 @@
           <span class="drawer-dot"></span>
         </div>
         <div class="drawer-brand-text">
-          <div class="drawer-title">PRAVAH <span class="c-orange">AI.</span></div>
+          <div class="drawer-title">TRINETRA <span class="c-orange">AI.</span></div>
           <div class="drawer-sub">FLASH FLOOD INTELLIGENCE</div>
         </div>
       </div>
@@ -41,12 +43,12 @@
       <!-- ── MAIN PAGES ── -->
       <div class="drawer-section-label">MAIN</div>
 
-      <a href="#home" class="drawer-item active" data-target="home">
+      <a href="/#home" class="drawer-item active" data-target="home">
         <i class="fa-solid fa-house"></i>
         <span>Home</span>
       </a>
 
-      <a href="#prediction" class="drawer-item" data-target="prediction">
+      <a href="/#prediction" class="drawer-item" data-target="prediction">
         <i class="fa-solid fa-magnifying-glass-chart"></i>
         <span>Flood Risk Prediction</span>
         <span class="d-badge">AI</span>
@@ -55,24 +57,24 @@
       <!-- ── ABOUT SECTIONS ── -->
       <div class="drawer-section-label">ABOUT</div>
 
-      <a href="#how-it-works" class="drawer-item" data-target="how-it-works">
+      <a href="/#how-it-works" class="drawer-item" data-target="how-it-works">
         <i class="fa-solid fa-circle-info"></i>
         <span>How It Works</span>
       </a>
 
-      <a href="#ml-model" class="drawer-item" data-target="ml-model">
+      <a href="/#ml-model" class="drawer-item" data-target="ml-model">
         <i class="fa-solid fa-brain"></i>
         <span>ML Model</span>
         <span class="d-badge">XGBoost</span>
       </a>
 
-      <a href="#agentic-ai" class="drawer-item" data-target="agentic-ai">
+      <a href="/#agentic-ai" class="drawer-item" data-target="agentic-ai">
         <i class="fa-solid fa-robot"></i>
         <span>Agentic AI</span>
         <span class="d-badge">LangGraph</span>
       </a>
 
-      <a href="#past-events" class="drawer-item" data-target="past-events">
+      <a href="/#past-events" class="drawer-item" data-target="past-events">
         <i class="fa-solid fa-clock-rotate-left"></i>
         <span>Past Events</span>
       </a>
@@ -119,16 +121,16 @@
         <button class="nav-hamburger-btn" id="nav-hamburger-btn" title="Open Navigation Menu">
           <i class="fa-solid fa-bars"></i>
         </button>
-        <a href="#home" class="nav-brand">
-          <span class="nav-title">PRAVAH <span class="accent">AI</span></span>
+        <a href="/#home" class="nav-brand">
+          <span class="nav-title">TRINETRA <span class="accent">AI</span></span>
         </a>
       </div>
 
       <nav class="nav-links">
-        <a href="#how-it-works">How It Works</a>
-        <a href="#ml-model">ML Model</a>
-        <a href="#agentic-ai">Agentic AI</a>
-        <a href="#past-events">Past Events</a>
+        <a href="/#how-it-works">How It Works</a>
+        <a href="/#ml-model">ML Model</a>
+        <a href="/#agentic-ai">Agentic AI</a>
+        <a href="/#past-events">Past Events</a>
       </nav>
 
       <div class="nav-actions">
@@ -186,7 +188,7 @@
       <div class="hero-top-grid">
         <div class="hero-text-col">
           <div class="hero-badge" data-en="• FLASH FLOOD INTELLIGENCE &amp; EARLY WARNING SYSTEM •" data-hi="• बाढ़ पूर्व चेतावनी एवं आपदा प्रबंधन प्रणाली •">• FLASH FLOOD INTELLIGENCE &amp; EARLY WARNING SYSTEM •</div>
-          <h1 class="hero-headline">PRAVAH <span class="accent">AI</span></h1>
+          <h1 class="hero-headline">TRINETRA <span class="accent">AI</span></h1>
           <p class="hero-tagline">
             <span class="c-orange" data-en="PREDICT EARLY." data-hi="पूर्व चेतावनी।">PREDICT EARLY.</span>&nbsp;
             <span class="c-navy" data-en="EXPLAIN CLEARLY." data-hi="स्पष्ट व्याख्या।">EXPLAIN CLEARLY.</span>&nbsp;
@@ -198,8 +200,8 @@
         </div>
 
         <div class="hero-graphic-col">
-          <div class="map-graphic-wrapper" style="padding: 0; border: none; background: transparent; box-shadow: none;">
-            <div id="hero-map" style="width: 100%; height: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.2); z-index: 1; border: 4px solid #ffffff;"></div>
+          <div class="map-graphic-wrapper" style="position: relative; width: 100%; min-height: 320px; height: 320px; padding: 0; border: none; background: transparent; box-shadow: none;">
+            <div id="hero-map" style="width: 100%; height: 320px; min-height: 320px; border-radius: 16px; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.15); z-index: 1; border: 3px solid #ffffff;"></div>
             <div style="display: none;">
               <!-- Transparent Vector Topographic Flood Map SVG -->
               <svg class="topo-map-svg" viewBox="0 0 540 340" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -420,10 +422,10 @@
         </div>
       </div>
 
-      <!-- ─── PRAVAH AI FEATURES SECTION ─── -->
+      <!-- ─── TRINETRA AI FEATURES SECTION ─── -->
       <div class="features-section-wrap">
         <h2 class="features-main-heading">
-          PRAVAH AI <span class="features-accent">FEATURES</span>
+          TRINETRA AI <span class="features-accent">FEATURES</span>
         </h2>
 
         <div class="features-3col-grid">
@@ -464,7 +466,7 @@
         <div class="status-left-group">
           <div class="status-badge-item">
             <i class="fa-solid fa-circle-check status-check-icon"></i>
-            <span class="status-strong">PRAVAH AI SYSTEM OPERATIONAL</span>
+            <span class="status-strong">TRINETRA AI SYSTEM OPERATIONAL</span>
           </div>
           <span class="status-divider">|</span>
           <span class="status-item">All systems functional</span>
@@ -476,7 +478,7 @@
         </div>
       </div>
 
-      <!-- ─── HOW PRAVAH AI WORKS (CLEAN WORKFLOW PIPELINE) ─── -->
+      <!-- ─── HOW TRINETRA AI WORKS (CLEAN WORKFLOW PIPELINE) ─── -->
       <section class="how-it-works-section" id="how-it-works">
         <div class="hiw-container">
           
@@ -485,7 +487,7 @@
               <i class="fa-solid fa-diagram-project"></i>
               <span>SYSTEM WORKFLOW PIPELINE</span>
             </div>
-            <h2 class="hiw-title">How Pravah AI Works</h2>
+            <h2 class="hiw-title">How Trinetra AI Works</h2>
             <p class="hiw-subtitle">From user input to real-time flood alerts and safe action.</p>
           </div>
 
@@ -598,7 +600,7 @@
               <span>ML ARCHITECTURE &amp; PIPELINE</span>
             </div>
             <h2 class="mlm-title">AI Flood Risk Prediction Model</h2>
-            <p class="mlm-subtitle">Pravah AI analyzes environmental and historical data to predict flood risk.</p>
+            <p class="mlm-subtitle">Trinetra AI analyzes environmental and historical data to predict flood risk.</p>
           </div>
 
           <!-- Flow Pipeline Strip -->
@@ -876,7 +878,7 @@
             <div class="aai-actions-row">
               <a href="#prediction" class="aai-btn aai-btn-primary">
                 <i class="fa-solid fa-comments"></i>
-                <span>Ask Pravah AI</span>
+                <span>Ask Trinetra AI</span>
               </a>
               <a href="#prediction" class="aai-btn aai-btn-secondary">
                 <i class="fa-solid fa-map-location-dot"></i>
@@ -1165,7 +1167,7 @@
           <div class="pe-bottom-wrap">
             <div class="pe-note-box">
               <i class="fa-solid fa-lightbulb c-yellow"></i>
-              <span>Past-event data helps Pravah AI learn historical patterns and improve flood-risk analysis.</span>
+              <span>Past-event data helps Trinetra AI learn historical patterns and improve flood-risk analysis.</span>
             </div>
             
             <a href="#prediction" class="pe-cta-btn">
@@ -1493,14 +1495,38 @@
             <div>
               <div class="wf-iot-badge-row">
                 <span class="wfc-category">CYBER-PHYSICAL EDGE TELEMETRY</span>
-                <span id="iot-heartbeat-badge" class="iot-status-badge online"><span class="pulse-dot"></span> Live Telemetry Connected</span>
+                <span id="iot-heartbeat-badge" class="iot-status-badge offline">⚪ Awaiting Hardware Telemetry</span>
               </div>
               <h3 id="iot-node-title" class="wf-iot-title">ESP32 Ground Hydrological Node: <span id="iot-device-id">ESP32_DEMO_01</span></h3>
-              <p class="wf-iot-meta">Subansiri River Basin Gauge · Station Ping: <span id="iot-ping-time">1.1s ago</span> · Calibration: <span class="calib-tag">Simulated Precipitation Equivalent</span></p>
+              <p class="wf-iot-meta">Subansiri River Basin Gauge · Station Ping: <span id="iot-ping-time">Offline (No Device)</span> · Calibration: <span class="calib-tag">Simulated Precipitation Equivalent</span></p>
             </div>
           </div>
           <div class="wf-iot-header-right">
             <span class="iot-source-tag"><i class="fa-solid fa-wifi"></i> Hardware Wi-Fi Mesh</span>
+          </div>
+        </div>
+
+        <!-- ─── INTERACTIVE CALIBRATION & PREDICTION CONTROL BAR ─── -->
+        <div class="iot-control-bar-wrap" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 14px 20px; margin-top: 15px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+          <!-- Left Side: Interactive Step Action Buttons -->
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <button id="btn-iot-mode-raw" class="btn-iot-step active" style="padding: 9px 16px; border-radius: 8px; border: 1px solid #3b82f6; background: rgba(59, 130, 246, 0.25); color: #60a5fa; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-microchip"></i> <span>1. Raw Edge Telemetry (ADC)</span>
+            </button>
+            <button id="btn-iot-mode-calibrate" class="btn-iot-step" style="padding: 9px 16px; border-radius: 8px; border: 1px solid #10b981; background: rgba(16, 185, 129, 0.1); color: #94a3b8; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-bolt"></i> <span>2. Apply Physics Calibration Engine</span>
+            </button>
+            <button id="btn-run-iot-prediction" class="btn-iot-step" style="padding: 9px 16px; border-radius: 8px; border: 1px solid #f97316; background: rgba(249, 115, 22, 0.2); color: #fb923c; font-weight: 800; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-brain"></i> <span>3. Predict Risk Using Calibrated IoT</span>
+            </button>
+          </div>
+
+          <!-- Right Side: Simulation Presets for Jury Presentation Safeguard -->
+          <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);">
+            <span style="font-size: 12px; color: #94a3b8; font-weight: 600;"><i class="fa-solid fa-sliders"></i> Simulation Presets:</span>
+            <button class="iot-preset-btn active" data-preset="dry" style="padding: 4px 10px; border-radius: 12px; border: 1px solid #475569; background: #334155; color: #f8fafc; font-size: 11px; cursor: pointer; font-weight: 600;">Dry Baseline</button>
+            <button class="iot-preset-btn" data-preset="spray" style="padding: 4px 10px; border-radius: 12px; border: 1px solid #0284c7; background: rgba(2, 132, 199, 0.2); color: #38bdf8; font-size: 11px; cursor: pointer; font-weight: 600;">Rain Spray</button>
+            <button class="iot-preset-btn" data-preset="flood" style="padding: 4px 10px; border-radius: 12px; border: 1px solid #ef4444; background: rgba(239, 68, 68, 0.2); color: #fca5a5; font-size: 11px; cursor: pointer; font-weight: 600;">Flash Flood Surge</button>
           </div>
         </div>
 
@@ -1515,15 +1541,15 @@
               </div>
             </div>
             <div class="wfc-val-box">
-              <div class="wfc-main-val" id="iot-rain-val">88 <span class="wfc-unit">%</span></div>
-              <div class="wfc-sub-val" id="iot-rain-sub">Simulated Equiv: <strong>281.6 mm</strong> (ADC: <span id="iot-raw-rain">450</span>)</div>
+              <div class="wfc-main-val" id="iot-rain-val"><span style="font-size: 24px; font-family: monospace; color: #60a5fa;">ADC --</span></div>
+              <div class="wfc-sub-val" id="iot-rain-sub"><strong style="color: #94a3b8;">Awaiting Sensor Telemetry (GPIO 34)</strong></div>
             </div>
             <div class="wfc-meta-table">
-              <div class="wfc-meta-row"><span class="wfc-meta-key">Probe Status:</span><span class="wfc-meta-val status-verified" id="iot-rain-status">Active Wet Surface</span></div>
-              <div class="wfc-meta-row"><span class="wfc-meta-key">Estimated R1h:</span><span class="wfc-meta-val" id="iot-rain-1h">30.8 mm/h (Surge)</span></div>
+              <div class="wfc-meta-row"><span class="wfc-meta-key">Probe Status:</span><span class="wfc-meta-val" id="iot-rain-status">Awaiting Input</span></div>
+              <div class="wfc-meta-row"><span class="wfc-meta-key">Estimated R1h:</span><span class="wfc-meta-val" id="iot-rain-1h">-- mm/h</span></div>
             </div>
             <div class="wfc-formula-box" id="formula-rain">
-              <code>Rain % = ((4095 - ADC) / 3600) * 100</code>
+              <code>[ Connect Hardware or Select Preset to Read Input ]</code>
             </div>
           </div>
 
@@ -1537,15 +1563,15 @@
               </div>
             </div>
             <div class="wfc-val-box">
-              <div class="wfc-main-val" id="iot-water-val">20.45 <span class="wfc-unit">m</span></div>
-              <div class="wfc-sub-val" id="iot-water-sub">Benchmark 20.0m · <strong class="c-red" id="iot-water-diff">+0.45 m Above Danger</strong></div>
+              <div class="wfc-main-val" id="iot-water-val"><span style="font-size: 24px; font-family: monospace; color: #c084fc;">ADC --</span></div>
+              <div class="wfc-sub-val" id="iot-water-sub"><strong style="color: #94a3b8;">Awaiting Probe Signal (GPIO 35)</strong></div>
             </div>
             <div class="wfc-meta-table">
-              <div class="wfc-meta-row"><span class="wfc-meta-key">Discharge:</span><span class="wfc-meta-val" id="iot-discharge-val">1,580 m³/s</span></div>
-              <div class="wfc-meta-row"><span class="wfc-meta-key">Raw Probe ADC:</span><span class="wfc-meta-val" id="iot-raw-water">3400 (Submerged)</span></div>
+              <div class="wfc-meta-row"><span class="wfc-meta-key">Discharge:</span><span class="wfc-meta-val" id="iot-discharge-val">-- m³/s</span></div>
+              <div class="wfc-meta-row"><span class="wfc-meta-key">Raw Probe ADC:</span><span class="wfc-meta-val" id="iot-raw-water">--</span></div>
             </div>
             <div class="wfc-formula-box" id="formula-water">
-              <code>Level (m) = 20.0 + ((ADC - 300) / 3200) * 1.6</code>
+              <code>[ Connect Hardware or Select Preset to Read Input ]</code>
             </div>
           </div>
 
@@ -1559,15 +1585,15 @@
               </div>
             </div>
             <div class="wfc-val-box">
-              <div class="wfc-main-val" id="iot-soil-val">92 <span class="wfc-unit">%</span></div>
-              <div class="wfc-sub-val" id="iot-soil-sub">Catchment Saturation · <strong class="c-red">Near Runoff Capacity</strong></div>
+              <div class="wfc-main-val" id="iot-soil-val"><span style="font-size: 24px; font-family: monospace; color: #4ade80;">ADC --</span></div>
+              <div class="wfc-sub-val" id="iot-soil-sub"><strong style="color: #94a3b8;">Awaiting Soil Input (GPIO 32)</strong></div>
             </div>
             <div class="wfc-meta-table">
-              <div class="wfc-meta-row"><span class="wfc-meta-key">Raw Soil ADC:</span><span class="wfc-meta-val" id="iot-raw-soil">380 (Saturated)</span></div>
-              <div class="wfc-meta-row"><span class="wfc-meta-key">Runoff Status:</span><span class="wfc-meta-val status-verified">Immediate Inflow</span></div>
+              <div class="wfc-meta-row"><span class="wfc-meta-key">Raw Soil ADC:</span><span class="wfc-meta-val" id="iot-raw-soil">--</span></div>
+              <div class="wfc-meta-row"><span class="wfc-meta-key">Runoff Status:</span><span class="wfc-meta-val">Awaiting Data</span></div>
             </div>
             <div class="wfc-formula-box" id="formula-soil">
-              <code>Soil % = 35.0 + ((4095 - ADC) / 3200) * 62</code>
+              <code>[ Connect Hardware or Select Preset to Read Input ]</code>
             </div>
           </div>
 
@@ -1581,12 +1607,12 @@
               </div>
             </div>
             <div class="wfc-val-box">
-              <div class="wfc-main-val" id="iot-temp-val">28.5 <span class="wfc-unit">°C</span></div>
-              <div class="wfc-sub-val" id="iot-hum-sub">Relative Humidity: <strong id="iot-hum-val">92% RH</strong></div>
+              <div class="wfc-main-val" id="iot-temp-val">-- <span class="wfc-unit">°C</span></div>
+              <div class="wfc-sub-val" id="iot-hum-sub">Relative Humidity: <strong id="iot-hum-val">--% RH</strong></div>
             </div>
             <div class="wfc-meta-table">
-              <div class="wfc-meta-row"><span class="wfc-meta-key">Air Pressure Proxy:</span><span class="wfc-meta-val">996 hPa (Low)</span></div>
-              <div class="wfc-meta-row"><span class="wfc-meta-key">Dew Point:</span><span class="wfc-meta-val">27.1 °C</span></div>
+              <div class="wfc-meta-row"><span class="wfc-meta-key">Air Pressure Proxy:</span><span class="wfc-meta-val">-- hPa</span></div>
+              <div class="wfc-meta-row"><span class="wfc-meta-key">Dew Point:</span><span class="wfc-meta-val">-- °C</span></div>
             </div>
           </div>
         </div>

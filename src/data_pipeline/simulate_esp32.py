@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Pravah AI — ESP32 Virtual Node Hardware Simulator
+Trinetra AI — ESP32 Virtual Node Hardware Simulator
 Directly sends synthetic sensor ADC readings to backend API (:5000) or Gateway (:3000).
 Tests and demonstrates real-time physical calibration into rainfall, river levels & soil moisture.
 """
@@ -81,7 +81,7 @@ def transmit(url, payload):
         return None, str(e)
 
 def main():
-    parser = argparse.ArgumentParser(description="Pravah AI ESP32 Hardware Simulator")
+    parser = argparse.ArgumentParser(description="Trinetra AI ESP32 Hardware Simulator")
     parser.add_argument("--url", default=DEFAULT_BACKEND_URL, help="Backend or Gateway URL")
     parser.add_argument("--scenario", default=None, choices=["1", "2", "3"], help="Scenario 1=Dry, 2=Spray, 3=Flash Flood")
     parser.add_argument("--continuous", action="store_true", help="Send stream every 2.5 seconds")
@@ -89,7 +89,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 60)
-    print("  🌊 Pravah AI — Virtual ESP32 Hardware Telemetry Node")
+    print("  🌊 Trinetra AI — Virtual ESP32 Hardware Telemetry Node")
     print("=" * 60)
     print(f"Target Server Endpoint: {args.url}")
 
@@ -105,19 +105,19 @@ def main():
     if args.continuous:
         print(f"Streaming live telemetry every {args.interval}s. Press Ctrl+C to stop.\n")
         while True:
-            payload = generate_telemetry_payload(scenario_choice)
-            status, res = send_payload(args.url, payload)
+            payload = generate_telemetry(scenario_choice)
+            status, res = transmit(args.url, payload)
             if status:
                 print(f"[🟢 SENT {status}] RainADC={payload['raw_rain']} WaterADC={payload['raw_water_level']} SoilADC={payload['raw_soil']} Temp={payload['temperature']}°C -> Response: {res[:80]}")
             else:
                 print(f"[🔴 FAILED] Server unreachable at {args.url} ({res})")
             time.sleep(args.interval)
     else:
-        payload = generate_telemetry_payload(scenario_choice)
+        payload = generate_telemetry(scenario_choice)
         print("\nPayload to transmit:")
         print(json.dumps(payload, indent=2))
         print("\nTransmitting to server...")
-        status, res = send_payload(args.url, payload)
+        status, res = transmit(args.url, payload)
         if status:
             print(f"✅ Success (HTTP {status}): {res}")
         else:

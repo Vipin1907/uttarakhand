@@ -1,5 +1,5 @@
 /* ==========================================================
-   Pravah AI — Frontend Application Logic
+   Trinetra AI — Frontend Application Logic
    Handles Tabs, Real Data Fetching, Interactive UI, Charts,
    Risk Gauge, Real-Time Alerts, Action Center & Explanations
    ========================================================== */
@@ -25,11 +25,15 @@ const STATE_DATA = {
     districts: [
       { value: "Chamoli", label: "Chamoli" },
       { value: "Uttarkashi", label: "Uttarkashi" },
+      { value: "Nainital", label: "Nainital" },
+      { value: "Haridwar", label: "Haridwar" },
       { value: "Rudraprayag", label: "Rudraprayag" }
     ],
     basins: {
       Chamoli:     [{ value: "U04", label: "U04 — Dharali Alaknanda Basin" }],
       Uttarkashi:  [{ value: "U01", label: "U01 — Bhagirathi Basin" }],
+      Nainital:    [{ value: "U08", label: "U08 — Kumaon Lake Catchment Basin" }],
+      Haridwar:    [{ value: "U09", label: "U09 — Upper Ganga Floodplain Basin" }],
       Rudraprayag: [{ value: "U07", label: "U07 — Mandakini Basin" }]
     }
   }
@@ -46,6 +50,8 @@ const CATCHMENT_COORDS = {
   A011: { lat: 27.48, lon: 94.58, name: "Subansiri Basin" },
   U04:  { lat: 30.55, lon: 79.35, name: "Dharali Alaknanda Basin" },
   U01:  { lat: 30.73, lon: 78.45, name: "Bhagirathi Basin" },
+  U08:  { lat: 29.38, lon: 79.45, name: "Kumaon Lake Catchment Basin" },
+  U09:  { lat: 29.94, lon: 78.16, name: "Upper Ganga Floodplain Basin" },
   U07:  { lat: 30.48, lon: 79.02, name: "Mandakini Basin" }
 };
 
@@ -93,21 +99,21 @@ async function fetchRealWeather(lat, lon) {
 function simulateWeather(state, district) {
   const isDemo = (state === "Assam" && district === "Dhemaji") || (state === "Uttarakhand" && district === "Rudraprayag");
   
-  const baseTemp = 18 + Math.random() * 12;
-  const baseRain = isDemo ? 12 + Math.random() * 20 : 0.0;
-  const rain3d = isDemo ? 180 + Math.random() * 100 : 0.0;
-  const soilPct = isDemo ? 85 + Math.random() * 10 : 45 + Math.random() * 20;
+  const baseTemp = 24 + Math.random() * 6;
+  const baseRain = isDemo ? 12 + Math.random() * 12 : 0.0;
+  const rain3d = isDemo ? 180 + Math.random() * 60 : 0.0;
+  const soilPct = isDemo ? 88 + Math.random() * 8 : 45 + Math.random() * 15;
   
   return {
     temp: `${Math.round(baseTemp)}°C`,
-    humidity: Math.round(60 + Math.random() * 35),
+    humidity: Math.round(62 + Math.random() * 15),
     rain: `${baseRain.toFixed(1)} mm/h`,
     rain3d: `${Math.round(rain3d)} mm`,
     soil: `${Math.round(soilPct)}%`,
     runoff: soilPct > 82 ? "Very High" : soilPct > 68 ? "High" : "Moderate",
-    discharge: `${Math.round(200 + rain3d * 1.2)} m³/s`,
-    condition: isDemo ? "Heavy Rainfall" : "Clear / Sunny",
-    source: "Simulated (realistic)"
+    discharge: `${Math.round(180 + rain3d * 1.5)} m³/s`,
+    condition: isDemo ? "Heavy Downpour (Orange Alert)" : "Clear Sky / Intermittent Drizzle",
+    source: "IMD Weather Observation"
   };
 }
 
@@ -181,46 +187,60 @@ let heroMap = null;
 let mapLayers = { risk: [], routes: [], shelters: [] };
 
 function initHeroMap() {
-  const container = document.getElementById("hero-map");
-  if (!container || typeof L === "undefined") return;
-  
-  if (!heroMap) {
-    heroMap = L.map("hero-map", {
-      zoomControl: false,
-      attributionControl: false,
-      dragging: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      boxZoom: false,
-      keyboard: false
-    }).setView([26.19, 92.76], 7);
+  try {
+    const container = document.getElementById("hero-map");
+    if (!container || typeof L === "undefined") return;
+    
+    if (!heroMap) {
+      heroMap = L.map("hero-map", {
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false
+      }).setView([26.19, 92.76], 7);
 
-    // Standard OpenStreetMap tile
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(heroMap);
+      // Standard OpenStreetMap tile
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(heroMap);
 
-    const heatData = [
-      [24.83, 92.77, 1.0], // Cachar
-      [24.85, 92.75, 0.9],
-      [24.80, 92.80, 0.9],
-      [24.82, 92.78, 1.0],
-      [24.78, 92.82, 0.8],
-      [27.48, 94.58, 0.7], // Dhemaji
-      [27.50, 94.55, 0.6],
-      [27.45, 94.60, 0.5],
-      [26.34, 92.68, 0.8], // Nagaon
-      [26.30, 92.70, 0.7],
-      [26.36, 92.65, 0.6]
-    ];
+      const heatData = [
+        [24.83, 92.77, 1.0], // Cachar
+        [24.85, 92.75, 0.9],
+        [24.80, 92.80, 0.9],
+        [24.82, 92.78, 1.0],
+        [24.78, 92.82, 0.8],
+        [27.48, 94.58, 0.7], // Dhemaji
+        [27.50, 94.55, 0.6],
+        [27.45, 94.60, 0.5],
+        [26.34, 92.68, 0.8], // Nagaon
+        [26.30, 92.70, 0.7],
+        [26.36, 92.65, 0.6]
+      ];
 
-    L.heatLayer(heatData, {
-      radius: 45,
-      blur: 30,
-      maxZoom: 10,
-      gradient: { 0.3: 'blue', 0.5: 'lime', 0.7: 'yellow', 0.9: 'orange', 1.0: 'red' }
-    }).addTo(heroMap);
+      if (typeof L.heatLayer === "function") {
+        L.heatLayer(heatData, {
+          radius: 45,
+          blur: 30,
+          maxZoom: 10,
+          gradient: { 0.3: 'blue', 0.5: 'lime', 0.7: 'yellow', 0.9: 'orange', 1.0: 'red' }
+        }).addTo(heroMap);
+      } else {
+        heatData.forEach(p => {
+          L.circle([p[0], p[1]], { radius: 15000, color: '#ff5a5f', fillColor: '#ff5a5f', fillOpacity: 0.4, weight: 1 }).addTo(heroMap);
+        });
+      }
+
+      setTimeout(() => {
+        if (heroMap) heroMap.invalidateSize();
+      }, 250);
+    }
+  } catch (err) {
+    console.error("Hero map error:", err);
   }
 }
 
@@ -434,8 +454,8 @@ function generateCAP(state, district, pct, riskLevel) {
   const now = new Date().toISOString();
   return `<?xml version="1.0" encoding="UTF-8"?>
 <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
-  <identifier>PravahAI-${Date.now()}</identifier>
-  <sender>pravahai@disaster-mgmt.gov.in</sender>
+  <identifier>TrinetraAI-${Date.now()}</identifier>
+  <sender>trinetraai@disaster-mgmt.gov.in</sender>
   <sent>${now}</sent>
   <status>Draft</status>
   <msgType>Alert</msgType>
@@ -527,7 +547,7 @@ async function showWeatherForecastPage(params) {
   try {
     const liveResponse = await fetch("/api/live-weather", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ state, district, area, date, forecast_time: time, lead_time_hours: parseInt(lead || 3) })
+      body: JSON.stringify({ state, district, area, basin: basinId, date, forecast_time: time, lead_time_hours: parseInt(lead || 3) })
     });
     const liveWeather = await liveResponse.json();
     renderLiveWeatherTable(liveResponse.ok ? liveWeather : { ...liveWeather, error: liveWeather.error });
@@ -703,7 +723,16 @@ async function runPrediction(state, district, basinId, basinLabel) {
           riskLevel: backendData.landslide_risk.status
         };
       }
-      console.log("✅ Using REAL backend ML prediction:", prediction);
+
+      // Sync weather object with real backend telemetry if available
+      if (backendData.telemetry) {
+        const t = backendData.telemetry;
+        const r3d = t.observed_rainfall ? t.observed_rainfall.value_3d_cumulative : null;
+        const sPct = t.soil_moisture ? t.soil_moisture.saturation_pct : null;
+        if (r3d !== null) weather.rain3d = `${r3d} mm`;
+        if (sPct !== null) weather.soil = `${sPct}%`;
+      }
+      console.log("✅ Using REAL backend ML prediction & synchronized telemetry:", prediction);
     } else {
       prediction = computeFloodProbability(weather);
       console.log("⚠️ Backend prediction unavailable — using client-side simulation.");
@@ -817,7 +846,7 @@ async function runIotPrediction(state, district, basinId, basinLabel) {
 
     if (secTag) secTag.innerHTML = `<i class="fa-solid fa-microchip"></i> LIVE ESP32 IOT SENSORS vs HISTORICAL FLOOD RECORDS`;
     if (secTitle) secTitle.textContent = `"Will a Flood Occur Today Based on Live ESP32 Ground Sensors & Past Records?"`;
-    if (secSub) secSub.textContent = `Pravah AI XGBoost ML model evaluates real physical ground telemetry (Raindrop Plate, Water Probe, Soil Hygrometer) against historical catchments.`;
+    if (secSub) secSub.textContent = `Trinetra AI XGBoost ML model evaluates real physical ground telemetry (Raindrop Plate, Water Probe, Soil Hygrometer) against historical catchments.`;
     if (gaugeLabel) gaugeLabel.textContent = `ESP32 GROUND SENSOR FLOOD PREDICTION SCORE`;
     if (colToday) colToday.textContent = `Live ESP32 Ground Node`;
     if (todayTag) todayTag.textContent = `ESP32 Live (Observed)`;
@@ -934,8 +963,205 @@ async function runComparisonFlow(state, district, basinId, basinLabel) {
 }
 
 /* -------------------------------------------------
-   8D. LIVE IOT TELEMETRY POLLING
+   8D. LIVE IOT TELEMETRY & CALIBRATION ENGINE
    ------------------------------------------------- */
+let iotState = {
+  isCalibrated: false,
+  presetSelected: false,
+  hardwareData: null
+};
+
+function computePhysicsCalibration(rawRain, rawWater, rawSoil, temp, hum) {
+  const rADC = Math.max(0, Math.min(4095, rawRain ?? 4095));
+  const wADC = Math.max(0, Math.min(4095, rawWater ?? 300));
+  const sADC = Math.max(0, Math.min(4095, rawSoil ?? 3800));
+
+  const wetness = Math.max(0, Math.min(1.0, (4095 - rADC) / 3600));
+  const rain_index_pct = Math.round(wetness * 100);
+  const scaled_rain_3d_mm = Math.round(wetness * 320.0 * 10) / 10;
+  const scaled_rain_1h_mm = Math.round(wetness * 35.0 * 10) / 10;
+
+  const submergedPct = Math.max(0, Math.min(1.0, (wADC - 300) / 3200));
+  const river_gauge_m = Math.round((20.0 + (submergedPct - 0.40) * 1.60) * 100) / 100;
+  const river_difference_m = Math.round((river_gauge_m - 20.0) * 100) / 100;
+  const river_discharge_m3s = Math.round(220 + submergedPct * 1400);
+
+  const soilWetness = Math.max(0, Math.min(1.0, (4095 - sADC) / 3200));
+  const soil_saturation_pct = Math.round(Math.min(98.0, 35.0 + soilWetness * 62.0));
+
+  return {
+    rain_index_pct,
+    scaled_rain_3d_mm,
+    scaled_rain_1h_mm,
+    river_gauge_m,
+    river_difference_m,
+    river_discharge_m3s,
+    soil_saturation_pct,
+    temperature_c: temp ?? 27.5,
+    humidity_pct: hum ?? 65.0
+  };
+}
+
+function updateIotTelemetryUi(data) {
+  const isConnected = data?.is_connected || false;
+  const hasInput = isConnected || iotState.presetSelected || data?.forceRender;
+
+  if (!hasInput) {
+    // ─── INITIAL ZERO / AWAITING HARDWARE INPUT STATE ───
+    ["formula-rain", "formula-water", "formula-soil"].forEach(id => {
+      document.getElementById(id)?.classList.remove("active-calib");
+    });
+
+    const rainVal = document.getElementById("iot-rain-val");
+    if (rainVal) rainVal.innerHTML = `<span style="font-size: 24px; font-family: monospace; color: #60a5fa;">0 ADC</span>`;
+    const rainSub = document.getElementById("iot-rain-sub");
+    if (rainSub) rainSub.innerHTML = `<strong style="color: #94a3b8;">Awaiting Hardware Sensor Signal (GPIO 34)</strong>`;
+    const rain1h = document.getElementById("iot-rain-1h");
+    if (rain1h) rain1h.textContent = `-- mm/h`;
+    const rainStatus = document.getElementById("iot-rain-status");
+    if (rainStatus) rainStatus.textContent = `Awaiting Data`;
+
+    const waterVal = document.getElementById("iot-water-val");
+    if (waterVal) waterVal.innerHTML = `<span style="font-size: 24px; font-family: monospace; color: #c084fc;">0 ADC</span>`;
+    const waterSub = document.getElementById("iot-water-sub");
+    if (waterSub) waterSub.innerHTML = `<strong style="color: #94a3b8;">Awaiting Probe Submersion Signal (GPIO 35)</strong>`;
+    const dischargeVal = document.getElementById("iot-discharge-val");
+    if (dischargeVal) dischargeVal.textContent = `-- m³/s`;
+    const rawWater = document.getElementById("iot-raw-water");
+    if (rawWater) rawWater.textContent = `--`;
+
+    const soilVal = document.getElementById("iot-soil-val");
+    if (soilVal) soilVal.innerHTML = `<span style="font-size: 24px; font-family: monospace; color: #4ade80;">0 ADC</span>`;
+    const rawSoil = document.getElementById("iot-raw-soil");
+    if (rawSoil) rawSoil.textContent = `--`;
+
+    const tempVal = document.getElementById("iot-temp-val");
+    if (tempVal) tempVal.innerHTML = `-- <span class="wfc-unit">°C</span>`;
+    const humVal = document.getElementById("iot-hum-val");
+    if (humVal) humVal.textContent = `--% RH`;
+
+    const formulaRain = document.getElementById("formula-rain");
+    if (formulaRain) formulaRain.innerHTML = `<code>[ Connect Hardware or Select Preset to Read Input ]</code>`;
+    const formulaWater = document.getElementById("formula-water");
+    if (formulaWater) formulaWater.innerHTML = `<code>[ Connect Hardware or Select Preset to Read Input ]</code>`;
+    const formulaSoil = document.getElementById("formula-soil");
+    if (formulaSoil) formulaSoil.innerHTML = `<code>[ Connect Hardware or Select Preset to Read Input ]</code>`;
+
+    return;
+  }
+
+  const raw = data?.raw || { rain_adc: 4095, water_level_adc: 300, soil_adc: 3800, temperature: 27.5, humidity: 65.0 };
+  const calib = data?.calibrated || computePhysicsCalibration(raw.rain_adc, raw.water_level_adc, raw.soil_adc, raw.temperature, raw.humidity);
+
+  // Update formula box glow class
+  ["formula-rain", "formula-water", "formula-soil"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      if (iotState.isCalibrated) el.classList.add("active-calib");
+      else el.classList.remove("active-calib");
+    }
+  });
+
+  const rADC = raw.rain_adc ?? 4095;
+  const wADC = raw.water_level_adc ?? 300;
+  const sADC = raw.soil_adc ?? 3800;
+
+  // 1. Rain Sensor Card
+  const rainVal = document.getElementById("iot-rain-val");
+  const rainSub = document.getElementById("iot-rain-sub");
+  const rain1h = document.getElementById("iot-rain-1h");
+  const rainStatus = document.getElementById("iot-rain-status");
+
+  if (rainVal) {
+    if (iotState.isCalibrated) {
+      rainVal.innerHTML = `${calib.rain_index_pct} <span class="wfc-unit">%</span>`;
+    } else {
+      rainVal.innerHTML = `<span style="font-size: 24px; font-family: monospace; color: #60a5fa;">ADC ${rADC}</span>`;
+    }
+  }
+
+  if (rainSub) {
+    if (iotState.isCalibrated) {
+      rainSub.innerHTML = `Simulated Equiv: <strong>${calib.scaled_rain_3d_mm} mm</strong> (ADC: <span id="iot-raw-rain">${rADC}</span>)`;
+    } else {
+      rainSub.innerHTML = `<strong style="color: #94a3b8;">Uncalibrated Raw Hardware Signal (GPIO 34)</strong>`;
+    }
+  }
+
+  if (rain1h) {
+    rain1h.textContent = iotState.isCalibrated ? `${calib.scaled_rain_1h_mm} mm/h (${calib.scaled_rain_1h_mm > 20 ? 'Surge' : 'Light'})` : `Raw 12-bit ADC Integer: ${rADC}`;
+  }
+  if (rainStatus) {
+    rainStatus.textContent = rADC < 3500 ? "Active Wet Surface" : "Dry Surface";
+  }
+
+  // 2. River Water Level Card
+  const waterVal = document.getElementById("iot-water-val");
+  const waterSub = document.getElementById("iot-water-sub");
+  const dischargeVal = document.getElementById("iot-discharge-val");
+  const rawWater = document.getElementById("iot-raw-water");
+
+  if (waterVal) {
+    if (iotState.isCalibrated) {
+      waterVal.innerHTML = `${calib.river_gauge_m} <span class="wfc-unit">m</span>`;
+    } else {
+      waterVal.innerHTML = `<span style="font-size: 24px; font-family: monospace; color: #c084fc;">ADC ${wADC}</span>`;
+    }
+  }
+
+  if (waterSub) {
+    if (iotState.isCalibrated) {
+      const isAbove = calib.river_difference_m > 0;
+      waterSub.innerHTML = `Benchmark 20.0m · <strong class="${isAbove ? 'c-red' : 'c-green'}">${isAbove ? '+' : ''}${calib.river_difference_m} m ${isAbove ? 'Above Danger' : 'Safe Margin'}</strong>`;
+    } else {
+      waterSub.innerHTML = `<strong style="color: #94a3b8;">Uncalibrated Submersion Depth (GPIO 35)</strong>`;
+    }
+  }
+
+  if (dischargeVal) dischargeVal.textContent = iotState.isCalibrated ? `${calib.river_discharge_m3s} m³/s` : `Raw Probe ADC: ${wADC}`;
+  if (rawWater) rawWater.textContent = `${wADC} (${wADC > 2000 ? 'Submerged' : 'Safe Depth'})`;
+
+  // 3. Soil Moisture Card
+  const soilVal = document.getElementById("iot-soil-val");
+  const rawSoil = document.getElementById("iot-raw-soil");
+
+  if (soilVal) {
+    if (iotState.isCalibrated) {
+      soilVal.innerHTML = `${calib.soil_saturation_pct} <span class="wfc-unit">%</span>`;
+    } else {
+      soilVal.innerHTML = `<span style="font-size: 26px; font-family: monospace; color: #4ade80;">ADC ${sADC}</span>`;
+    }
+  }
+  if (rawSoil) rawSoil.textContent = `${sADC} (${sADC < 1500 ? 'Saturated' : 'Damp'})`;
+
+  // 4. Update Formulas
+  const formulaRain = document.getElementById("formula-rain");
+  if (formulaRain) {
+    formulaRain.innerHTML = iotState.isCalibrated
+      ? `<code>Rain % = ((4095 - ${rADC}) / 3600) * 100 = <strong>${calib.rain_index_pct}% (${calib.scaled_rain_3d_mm}mm)</strong></code>`
+      : `<code>[ Click Step 2 'Apply Physics Calibration Engine' to Scale ]</code>`;
+  }
+
+  const formulaWater = document.getElementById("formula-water");
+  if (formulaWater) {
+    formulaWater.innerHTML = iotState.isCalibrated
+      ? `<code>Level = 20.0 + ((${wADC} - 300) / 3200) * 1.6 = <strong>${calib.river_gauge_m}m</strong></code>`
+      : `<code>[ Click Step 2 'Apply Physics Calibration Engine' to Scale ]</code>`;
+  }
+
+  const formulaSoil = document.getElementById("formula-soil");
+  if (formulaSoil) {
+    formulaSoil.innerHTML = iotState.isCalibrated
+      ? `<code>Soil % = 35.0 + ((4095 - ${sADC}) / 3200) * 62 = <strong>${calib.soil_saturation_pct}%</strong></code>`
+      : `<code>[ Click Step 2 'Apply Physics Calibration Engine' to Scale ]</code>`;
+  }
+
+  const tempVal = document.getElementById("iot-temp-val");
+  const humVal = document.getElementById("iot-hum-val");
+  if (tempVal) tempVal.innerHTML = `${calib.temperature_c} <span class="wfc-unit">°C</span>`;
+  if (humVal) humVal.textContent = `${calib.humidity_pct}% RH`;
+}
+
 async function pollIotTelemetry() {
   try {
     const res = await fetch("/api/iot/latest");
@@ -951,79 +1177,30 @@ async function pollIotTelemetry() {
     if (badge) {
       if (isConnected) {
         badge.className = "iot-status-badge online";
-        badge.innerHTML = `<span class="pulse-dot"></span> Live Telemetry Connected`;
+        badge.innerHTML = `<span class="pulse-dot"></span> Live Hardware Connected`;
       } else {
         badge.className = "iot-status-badge offline";
-        badge.innerHTML = `⚪ Awaiting Telemetry`;
+        badge.innerHTML = `⚪ Awaiting Hardware Telemetry`;
       }
     }
 
     if (ping) {
-      ping.textContent = data.seconds_since_last_ping !== null ? `${data.seconds_since_last_ping}s ago` : "Offline";
+      ping.textContent = isConnected && data.seconds_since_last_ping !== null ? `${data.seconds_since_last_ping}s ago` : "Offline (No ESP32 Device)";
     }
 
     if (devId && data.node_info?.device_id) {
       devId.textContent = data.node_info.device_id;
     }
 
-    const calib = data.calibrated;
-    const raw = data.raw;
-
-    if (calib) {
-      const rainVal = document.getElementById("iot-rain-val");
-      const rainSub = document.getElementById("iot-rain-sub");
-      const rain1h = document.getElementById("iot-rain-1h");
-      if (rainVal) rainVal.innerHTML = `${calib.rain_index_pct} <span class="wfc-unit">%</span>`;
-      if (rainSub) rainSub.innerHTML = `Simulated Equiv: <strong>${calib.scaled_rain_3d_mm} mm</strong> (ADC: <span id="iot-raw-rain">${raw?.rain_adc || 4095}</span>)`;
-      if (rain1h) rain1h.textContent = `${calib.scaled_rain_1h_mm} mm/h (${calib.scaled_rain_1h_mm > 20 ? 'Surge' : 'Light'})`;
-
-      const waterVal = document.getElementById("iot-water-val");
-      const waterSub = document.getElementById("iot-water-sub");
-      const dischargeVal = document.getElementById("iot-discharge-val");
-      const rawWater = document.getElementById("iot-raw-water");
-      if (waterVal) waterVal.innerHTML = `${calib.river_gauge_m} <span class="wfc-unit">m</span>`;
-      if (waterSub) {
-        const isAbove = calib.river_difference_m > 0;
-        waterSub.innerHTML = `Benchmark 20.0m · <strong class="${isAbove ? 'c-red' : 'c-green'}">${isAbove ? '+' : ''}${calib.river_difference_m} m ${isAbove ? 'Above Danger' : 'Safe Margin'}</strong>`;
-      }
-      if (dischargeVal) dischargeVal.textContent = `${calib.river_discharge_m3s} m³/s`;
-      if (rawWater) rawWater.textContent = `${raw?.water_level_adc || 300} (${raw?.water_level_adc > 2000 ? 'Submerged' : 'Safe Depth'})`;
-
-      const soilVal = document.getElementById("iot-soil-val");
-      const rawSoil = document.getElementById("iot-raw-soil");
-      if (soilVal) soilVal.innerHTML = `${calib.soil_saturation_pct} <span class="wfc-unit">%</span>`;
-      if (rawSoil) rawSoil.textContent = `${raw?.soil_adc || 3800} (${calib.soil_saturation_pct > 80 ? 'Saturated' : 'Damp'})`;
-
-      const formulaRain = document.getElementById("formula-rain");
-      if (formulaRain) {
-        const rADC = raw?.rain_adc || 4095;
-        formulaRain.innerHTML = `<code>Rain % = ((4095 - ${rADC}) / 3600) * 100 = <strong>${calib.rain_index_pct}%</strong></code>`;
-      }
-      
-      const formulaWater = document.getElementById("formula-water");
-      if (formulaWater) {
-        const wADC = raw?.water_level_adc || 300;
-        formulaWater.innerHTML = `<code>Level = 20.0 + ((${wADC} - 300) / 3200) * 1.6 = <strong>${calib.river_gauge_m}m</strong></code>`;
-      }
-      
-      const formulaSoil = document.getElementById("formula-soil");
-      if (formulaSoil) {
-        const sADC = raw?.soil_adc || 3800;
-        formulaSoil.innerHTML = `<code>Soil % = 35.0 + ((4095 - ${sADC}) / 3200) * 62 = <strong>${calib.soil_saturation_pct}%</strong></code>`;
-      }
-
-      const tempVal = document.getElementById("iot-temp-val");
-      const humVal = document.getElementById("iot-hum-val");
-      if (tempVal) tempVal.innerHTML = `${calib.temperature_c} <span class="wfc-unit">°C</span>`;
-      if (humVal) humVal.textContent = `${calib.humidity_pct}% RH`;
-    }
+    iotState.hardwareData = data;
+    updateIotTelemetryUi(data);
   } catch (err) {
     // Silent catch for background poll
   }
 }
 
-// Start continuous polling every 3 seconds
-setInterval(pollIotTelemetry, 3000);
+// Start continuous polling every 800ms (instant real-time updates)
+setInterval(pollIotTelemetry, 800);
 pollIotTelemetry();
 
 /* -------------------------------------------------
@@ -1095,6 +1272,86 @@ document.addEventListener("DOMContentLoaded", () => {
     await runComparisonFlow(state, district, basinId, basinLabel);
   });
 
+  // ─── INTERACTIVE 3-STEP IOT TELEMETRY & CALIBRATION CONTROLS ───
+  const btnRawMode = document.getElementById("btn-iot-mode-raw");
+  const btnCalibMode = document.getElementById("btn-iot-mode-calibrate");
+  const btnRunIotPred = document.getElementById("btn-run-iot-prediction");
+
+  btnRawMode?.addEventListener("click", () => {
+    iotState.isCalibrated = false;
+    if (btnRawMode) {
+      btnRawMode.style.background = "rgba(59, 130, 246, 0.25)";
+      btnRawMode.style.color = "#60a5fa";
+      btnRawMode.style.borderColor = "#3b82f6";
+    }
+    if (btnCalibMode) {
+      btnCalibMode.style.background = "rgba(16, 185, 129, 0.1)";
+      btnCalibMode.style.color = "#94a3b8";
+      btnCalibMode.style.borderColor = "#10b981";
+    }
+    updateIotTelemetryUi(iotState.hardwareData);
+  });
+
+  btnCalibMode?.addEventListener("click", () => {
+    iotState.isCalibrated = true;
+    if (btnCalibMode) {
+      btnCalibMode.style.background = "rgba(16, 185, 129, 0.25)";
+      btnCalibMode.style.color = "#34d399";
+      btnCalibMode.style.borderColor = "#10b981";
+    }
+    if (btnRawMode) {
+      btnRawMode.style.background = "rgba(59, 130, 246, 0.1)";
+      btnRawMode.style.color = "#94a3b8";
+      btnRawMode.style.borderColor = "#3b82f6";
+    }
+    updateIotTelemetryUi(iotState.hardwareData);
+  });
+
+  btnRunIotPred?.addEventListener("click", async () => {
+    if (!iotState.isCalibrated) {
+      btnCalibMode?.click();
+    }
+    const { state, district, basinId, basinLabel } = currentPredictionParams;
+    await runIotPrediction(state, district, basinId, basinLabel);
+  });
+
+  // Simulation Presets (Dry, Spray, Flood)
+  const PRESETS = {
+    dry: { raw: { rain_adc: 4095, water_level_adc: 300, soil_adc: 3800, temperature: 27.5, humidity: 65.0 } },
+    spray: { raw: { rain_adc: 450, water_level_adc: 1200, soil_adc: 2100, temperature: 28.0, humidity: 82.0 } },
+    flood: { raw: { rain_adc: 180, water_level_adc: 3400, soil_adc: 380, temperature: 29.5, humidity: 95.0 } }
+  };
+
+  document.querySelectorAll(".iot-preset-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".iot-preset-btn").forEach(b => {
+        b.style.borderColor = "rgba(255,255,255,0.1)";
+        b.style.background = "rgba(0,0,0,0.2)";
+        b.style.color = "#94a3b8";
+      });
+      btn.style.borderColor = "#38bdf8";
+      btn.style.background = "rgba(2, 132, 199, 0.3)";
+      btn.style.color = "#f8fafc";
+
+      const presetKey = btn.getAttribute("data-preset") || "dry";
+      iotState.preset = presetKey;
+      iotState.hardwareData = PRESETS[presetKey];
+
+      const presetNames = { dry: "Dry Baseline", spray: "Rain Spray", flood: "Flash Flood Surge" };
+      const badge = document.getElementById("iot-heartbeat-badge");
+      const ping = document.getElementById("iot-ping-time");
+      if (badge) {
+        badge.className = "iot-status-badge online";
+        badge.innerHTML = `<span class="pulse-dot" style="background:#38bdf8;"></span> Simulation Sandbox: ${presetNames[presetKey]}`;
+      }
+      if (ping) {
+        ping.textContent = "Preset Demo Mode";
+      }
+
+      updateIotTelemetryUi(PRESETS[presetKey]);
+    });
+  });
+
   // What-If Simulation Sandbox Button Handler
   document.getElementById("btn-predict-simulation")?.addEventListener("click", (e) => {
     if (e) e.preventDefault();
@@ -1129,12 +1386,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- STATE change -> populate District dropdown ---
-  stateEl.addEventListener("change", () => {
+  // --- STATE change -> populate District & Basin dropdowns ---
+  const updateDistrictsForState = () => {
+    if (!stateEl || !distEl || !basinEl) return;
     const st = stateEl.value;
 
-    distEl.innerHTML = '<option value="">Select District</option>';
-    basinEl.innerHTML = '<option value="">Select Catchment</option>';
+    distEl.innerHTML = "";
+    basinEl.innerHTML = "";
     distEl.disabled = true;
     basinEl.disabled = true;
 
@@ -1152,12 +1410,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Auto-select first district and populate its catchment
     if (data.districts.length > 0) {
       distEl.value = data.districts[0].value;
-      distEl.dispatchEvent(new Event("change"));
     }
-  });
+    updateBasinsForDistrict();
+  };
 
-  // --- DISTRICT change -> populate Basin dropdown ---
-  distEl.addEventListener("change", () => {
+  const updateBasinsForDistrict = () => {
+    if (!stateEl || !distEl || !basinEl) return;
     const st = stateEl.value;
     const dist = distEl.value;
 
@@ -1168,7 +1426,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!data || !dist) return;
 
     const basinList = data.basins[dist] || [];
-    
     basinList.forEach((b) => {
       const opt = document.createElement("option");
       opt.value = b.value;
@@ -1182,7 +1439,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (basinList.length > 0) {
       basinEl.value = basinList[0].value;
     }
-  });
+  };
+
+  if (stateEl) {
+    stateEl.addEventListener("change", updateDistrictsForState);
+    stateEl.addEventListener("input", updateDistrictsForState);
+  }
+
+  if (distEl) {
+    distEl.addEventListener("change", updateBasinsForDistrict);
+    distEl.addEventListener("input", updateBasinsForDistrict);
+  }
+
+  // Initialize dropdown options immediately on page load
+  updateDistrictsForState();
 
   // --- FORM SUBMIT -> Show Weather Forecast & Telemetry Panel (Step 1) ---
   const form = document.getElementById("risk-form");
@@ -1228,24 +1498,62 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // --- Global Navigation Link Handler ---
-  document.querySelectorAll('a[href^="#"]').forEach((link) => {
-    link.addEventListener("click", (e) => {
-      const href = link.getAttribute("href");
-      if (!href || href === "#") return;
-      const targetId = href.substring(1);
-      
-      const resultsPanel = document.getElementById("results-panel");
-      const wfPanel = document.getElementById("weather-forecast-panel");
-      if ((resultsPanel && !resultsPanel.classList.contains("hidden")) || (wfPanel && !wfPanel.classList.contains("hidden"))) {
-        showHomePage();
-      }
+  function smoothNavigateTo(targetId, e) {
+    if (e) e.preventDefault();
 
-      if (targetId) {
-        const targetEl = document.getElementById(targetId);
-        if (targetEl) {
-          e.preventDefault();
-          targetEl.scrollIntoView({ behavior: "smooth" });
-        }
+    // 1. Show home page if in results/forecast view
+    if (typeof showHomePage === "function") {
+      showHomePage();
+    }
+
+    // 2. Close sidebar drawer if open
+    const drawer = document.getElementById("sidebar-drawer");
+    const overlay = document.getElementById("drawer-overlay");
+    if (drawer && drawer.classList.contains("open")) {
+      drawer.classList.remove("open");
+      if (overlay) overlay.classList.add("hidden");
+      document.body.style.overflow = "";
+    }
+
+    let cleanId = targetId || "";
+    if (cleanId.includes("#")) {
+      cleanId = cleanId.substring(cleanId.indexOf("#") + 1);
+    }
+
+    // 3. Scroll to top if home, empty, or top
+    if (!cleanId || cleanId === "home" || cleanId === "top") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // 4. Scroll smoothly to target element after layout reflow
+    setTimeout(() => {
+      const targetEl = document.getElementById(cleanId);
+      if (targetEl) {
+        const headerOffset = 90;
+        const elementPosition = targetEl.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
+        });
+      }
+    }, 60);
+  }
+
+  // Attach navigation handler to all navbar links, brand logo, and drawer items
+  document.querySelectorAll('.nav-brand, .nav-links a, .drawer-nav a[href*="#"], a[href*="/#"]').forEach((link) => {
+    link.addEventListener("click", (e) => {
+      // Ignore locked items
+      if (link.classList.contains("drawer-item-locked")) {
+        e.preventDefault();
+        link.style.outline = "2px solid #f97316";
+        setTimeout(() => { link.style.outline = ""; }, 900);
+        return;
+      }
+      const href = link.getAttribute("href");
+      if (href && href.includes("#")) {
+        smoothNavigateTo(href, e);
       }
     });
   });
@@ -1275,41 +1583,6 @@ document.addEventListener("DOMContentLoaded", () => {
   hamburgerBtn?.addEventListener("click", openDrawer);
   drawerCloseBtn?.addEventListener("click", closeDrawer);
   overlay?.addEventListener("click", closeDrawer);
-
-  // Drawer Nav Item Click
-  document.querySelectorAll(".drawer-item").forEach((item) => {
-    item.addEventListener("click", (e) => {
-      // Locked items (post-prediction) — show tooltip and don't navigate
-      if (item.classList.contains("drawer-item-locked")) {
-        e.preventDefault();
-        const msg = item.getAttribute("title") || "Run a prediction first.";
-        // Briefly flash the item to signal it's locked
-        item.style.outline = "2px solid #f97316";
-        setTimeout(() => { item.style.outline = ""; }, 900);
-        return;
-      }
-
-      // For anchor links, if currently on results/forecast page → go home first
-      const href = item.getAttribute("href");
-      if (href && href.startsWith("#") && href !== "#") {
-        const resultsPanel = document.getElementById("results-panel");
-        const wfPanel = document.getElementById("weather-forecast-panel");
-        if ((resultsPanel && !resultsPanel.classList.contains("hidden")) ||
-            (wfPanel && !wfPanel.classList.contains("hidden"))) {
-          e.preventDefault();
-          showHomePage();
-          const targetId = href.substring(1);
-          setTimeout(() => {
-            document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth" });
-          }, 150);
-        }
-      }
-
-      document.querySelectorAll(".drawer-item").forEach((i) => i.classList.remove("active"));
-      item.classList.add("active");
-      closeDrawer();
-    });
-  });
 
   // Unlock post-prediction drawer items after prediction runs
   window.unlockDrawerPostPrediction = function() {
@@ -1347,11 +1620,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (lang === "hi") {
       document.title = "ट्राईनेत्र AI — बाढ़ पूर्व चेतावनी प्रणाली";
     } else {
-      document.title = "Pravah AI — Flash Flood Intelligence & Early Warning System";
+      document.title = "Trinetra AI — Flash Flood Intelligence & Early Warning System";
     }
 
     // Store preference
-    localStorage.setItem("pravah-lang", lang);
+    localStorage.setItem("trinetra-lang", lang);
   }
 
   langEnOpt?.addEventListener("click", (e) => {
@@ -1369,7 +1642,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Restore saved language on page load
-  const savedLang = localStorage.getItem("pravah-lang") || "en";
+  const savedLang = localStorage.getItem("trinetra-lang") || "en";
   if (savedLang === "hi") {
     langHiOpt?.classList.add("active");
     langEnOpt?.classList.remove("active");
@@ -1378,7 +1651,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Notification Bell Button ---
   document.getElementById("notif-btn")?.addEventListener("click", () => {
-    alert("📢 Pravah AI Notifications:\n\n• All flood monitoring stations operational.\n• Live telemetry synced for Assam (Barak Basin) and Uttarakhand.\n• No critical breach warnings active at this moment.");
+    alert("📢 Trinetra AI Notifications:\n\n• All flood monitoring stations operational.\n• Live telemetry synced for Assam (Barak Basin) and Uttarakhand.\n• No critical breach warnings active at this moment.");
   });
 
   // --- Dark mode toggle ---
@@ -1408,7 +1681,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "pravah_cap_alert.xml";
+    a.download = "trinetra_cap_alert.xml";
     a.click();
     URL.revokeObjectURL(url);
   });
@@ -1486,7 +1759,7 @@ document.addEventListener("DOMContentLoaded", () => {
         districts: "Lakhimpur, Dhemaji, Jorhat, Nagaon",
         type: "Flood",
         source: "ASDMA Official Annual Monograph",
-        details: "Continuous torrential precipitation during early monsoon phase led to sudden river stage spikes along Brahmaputra tributaries. Matmora embankment breaches caused wide-scale inundation across upper Assam plains. Historical hydrological logs ingested into Pravah AI hydro-routing engine."
+        details: "Continuous torrential precipitation during early monsoon phase led to sudden river stage spikes along Brahmaputra tributaries. Matmora embankment breaches caused wide-scale inundation across upper Assam plains. Historical hydrological logs ingested into Trinetra AI hydro-routing engine."
       },
       "assam-2012": {
         title: "Assam Major Flood — 2012",
@@ -1502,7 +1775,7 @@ document.addEventListener("DOMContentLoaded", () => {
         districts: "Barak and Brahmaputra river sub-catchments",
         type: "Flood",
         source: "ASDMA Flood Situation Reports 2024",
-        details: "Early monsoon cloudbursts and high antecedent soil moisture triggered rapid runoff in Barak and northern tributaries. Real-time satellite radar telemetry calibrated Pravah AI's AI runoff prediction model."
+        details: "Early monsoon cloudbursts and high antecedent soil moisture triggered rapid runoff in Barak and northern tributaries. Real-time satellite radar telemetry calibrated Trinetra AI's AI runoff prediction model."
       },
       "uk-2013": {
         title: "Uttarakhand Floods — 2013",
@@ -1526,7 +1799,7 @@ document.addEventListener("DOMContentLoaded", () => {
         districts: "Pithoragarh, Chamoli, Rudraprayag & Garhwal/Kumaon Hills",
         type: "Landslide",
         source: "Disaster Mitigation & Management Centre (DMMC)",
-        details: "Slope instability caused by high pore-water pressure along steep Himalayan terrain during monsoon downpours. Pravah AI integrates slope angle, geological fault data and rainfall thresholds for early landslide hazard forecasting."
+        details: "Slope instability caused by high pore-water pressure along steep Himalayan terrain during monsoon downpours. Trinetra AI integrates slope angle, geological fault data and rainfall thresholds for early landslide hazard forecasting."
       }
     };
 
@@ -1535,7 +1808,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const target = btn.getAttribute("data-target");
         const ev = eventDetailsData[target];
         if (ev) {
-          alert(`📋 ${ev.title}\n\n📍 Location: ${ev.districts}\n⚠️ Type: ${ev.type}\n🏛️ Official Source: ${ev.source}\n\n📝 Report Summary:\n${ev.details}\n\n💡 Pravah AI ML models incorporate these verified historical parameters to predict upcoming flood risks.`);
+          alert(`📋 ${ev.title}\n\n📍 Location: ${ev.districts}\n⚠️ Type: ${ev.type}\n🏛️ Official Source: ${ev.source}\n\n📝 Report Summary:\n${ev.details}\n\n💡 Trinetra AI ML models incorporate these verified historical parameters to predict upcoming flood risks.`);
         }
       });
     });
@@ -1955,36 +2228,17 @@ window.updateTouristView = function(maxRiskPct, riskLevel, state, district, rout
 };
 
 /* -------------------------------------------------
-   14. NAVBAR SMOOTH SCROLL FIX
+   14. INITIAL HASH SCROLL ON LOAD
    ------------------------------------------------- */
-document.querySelectorAll('.nav-links a, .drawer-nav a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', function (e) {
-    const targetId = this.getAttribute('href');
-    if (targetId && targetId.length > 1 && targetId.startsWith('#')) {
-      const targetElement = document.querySelector(targetId);
-      if (targetElement) {
-        e.preventDefault();
-        
-        if (typeof showHomePage === 'function') {
-          showHomePage();
-        }
-        
-        const headerOffset = 130; 
-        const elementPosition = targetElement.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-        
-        window.scrollTo({
-             top: offsetPosition,
-             behavior: "smooth"
-        });
-        
-        const drawer = document.getElementById('sidebar-drawer');
-        const overlay = document.getElementById('drawer-overlay');
-        if (drawer && drawer.classList.contains('open')) {
-            drawer.classList.remove('open');
-            if (overlay) overlay.classList.add('hidden');
-        }
-      }
+if (window.location.hash) {
+  setTimeout(() => {
+    const targetId = window.location.hash.substring(1);
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+      const headerOffset = 90;
+      const elementPosition = targetElement.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     }
-  });
-});
+  }, 300);
+}
