@@ -194,13 +194,95 @@ class DamMonitoringEngine:
             "alert_level": "RED EMERGENCY" if risk_score_pct >= 80 else ("ORANGE WARNING" if risk_score_pct >= 55 else "GREEN NORMAL")
         }
 
+    def get_dam_sensor_grid(self, dam_id: str) -> Dict[str, Any]:
+        """
+        Generates 5x8 Distributed Sensing Grid Matrix representing 5 Dam Gallery Levels x 8 Concrete Monolith Blocks.
+        Each node tracks micro-strain (με), crack opening (mm), seepage (L/s), and operational safety grade.
+        """
+        dam = self.dams_db.get(dam_id, self.dams_db["DAM_TEHRI"])
+        rows = 5  # Crest, Upper Gallery, Mid Wall, Lower Gallery, Base Toe
+        cols = 8  # Monolith Blocks 1 to 8
+        level_names = ["Crest Deck (El. +830m)", "Upper Gallery (El. +780m)", "Mid Monolith Wall (El. +720m)", "Lower Drainage Gallery (El. +650m)", "Base Foundation Toe (El. +580m)"]
+        
+        # Determine specific fracture anchor coordinates per dam
+        critical_nodes = {}
+        if dam_id == "DAM_TEHRI":
+            critical_nodes = {(1, 5): {"status": "WATCH", "crack_mm": 1.2, "strain": 420, "seepage": 2.1, "name": "Spillway Pier Monolith #6"}}
+        elif dam_id == "DAM_TAPOVAN":
+            critical_nodes = {
+                (2, 3): {"status": "CRITICAL", "crack_mm": 2.8, "strain": 840, "seepage": 6.8, "name": "Head Race Intake Block #4"},
+                (3, 2): {"status": "WATCH", "crack_mm": 1.6, "strain": 510, "seepage": 3.4, "name": "Drainage Gallery Block #3"}
+            }
+        elif dam_id == "DAM_RANGANADI":
+            critical_nodes = {
+                (1, 4): {"status": "CRITICAL", "crack_mm": 3.4, "strain": 960, "seepage": 9.5, "name": "Spillway Gate #4 Chute Wall"},
+                (2, 4): {"status": "WATCH", "crack_mm": 1.9, "strain": 530, "seepage": 4.1, "name": "Energy Dissipator Block #5"}
+            }
+        elif dam_id == "DAM_SUBANSIRI":
+            critical_nodes = {(3, 4): {"status": "WATCH", "crack_mm": 1.6, "strain": 460, "seepage": 2.8, "name": "Diversion Tunnel Plug Block #5"}}
+        elif dam_id == "DAM_MANERI":
+            critical_nodes = {(2, 2): {"status": "NORMAL", "crack_mm": 0.9, "strain": 280, "seepage": 1.2, "name": "Desilting Chamber Block #3"}}
+        elif dam_id == "DAM_KURICHHU":
+            critical_nodes = {(1, 3): {"status": "WATCH", "crack_mm": 1.1, "strain": 360, "seepage": 1.9, "name": "Right Abutment Monolith #4"}}
+
+        grid_matrix = []
+        total_nodes = rows * cols
+        alert_count = 0
+
+        for r in range(rows):
+            row_nodes = []
+            for c in range(cols):
+                coord = (r, c)
+                node_id = f"NODE_R{r+1}_C{c+1}"
+                if coord in critical_nodes:
+                    spec = critical_nodes[coord]
+                    status = spec["status"]
+                    crack_mm = spec["crack_mm"]
+                    strain = spec["strain"]
+                    seepage = spec["seepage"]
+                    block_name = spec["name"]
+                    if status != "NORMAL":
+                        alert_count += 1
+                else:
+                    status = "NORMAL"
+                    crack_mm = 0.0
+                    strain = round(120.0 + (r * 15.0) + (c * 8.0), 1)
+                    seepage = round(0.1 + (r * 0.08), 2)
+                    block_name = f"Monolith Block #{c+1} ({level_names[r].split('(')[0].strip()})"
+
+                row_nodes.append({
+                    "node_id": node_id,
+                    "row": r,
+                    "col": c,
+                    "level_name": level_names[r],
+                    "block_name": block_name,
+                    "status": status,
+                    "crack_displacement_mm": crack_mm,
+                    "strain_microstrain": strain,
+                    "seepage_lps": seepage,
+                    "is_active_alert": status != "NORMAL"
+                })
+            grid_matrix.append(row_nodes)
+
+        return {
+            "dam_id": dam_id,
+            "rows": rows,
+            "cols": cols,
+            "total_nodes": total_nodes,
+            "alert_nodes_count": alert_count,
+            "overall_grid_status": "CRITICAL WARNING" if any(spec["status"] == "CRITICAL" for spec in critical_nodes.values()) else ("WATCH" if alert_count > 0 else "NORMAL"),
+            "grid": grid_matrix
+        }
+
     def get_all_dams_status(self) -> List[Dict[str, Any]]:
-        """Returns hydrological and structural status for all 6 target dams."""
+        """Returns hydrological, structural status, and 2D sensor grid for all 6 target dams."""
         results = []
         for dam_id, dam in self.dams_db.items():
             lead_info = self.calculate_lead_time_propagation(dam_id, dam["outflow_cusecs"])
+            grid_info = self.get_dam_sensor_grid(dam_id)
             dam_data = dict(dam)
             dam_data["lead_time"] = lead_info
+            dam_data["sensor_grid"] = grid_info
             results.append(dam_data)
         return results
 

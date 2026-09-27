@@ -2380,6 +2380,167 @@ function updateDamUI(damId) {
   if (sliderOutflow) sliderOutflow.value = dam.outflow_cusecs;
   if (sliderGates) sliderGates.value = dam.spillway_gates_open;
   triggerDamSimulation();
+
+  // Render 2D Distributed Sensor Grid
+  if (dam.sensor_grid) {
+    renderDamSensorGrid(dam.sensor_grid);
+  } else {
+    renderDamSensorGrid(generateDefaultDamSensorGrid(damId));
+  }
+}
+
+function generateDefaultDamSensorGrid(damId) {
+  const rows = 5;
+  const cols = 8;
+  const levelNames = ["Crest Deck (El. +830m)", "Upper Gallery (El. +780m)", "Mid Monolith Wall (El. +720m)", "Lower Drainage Gallery (El. +650m)", "Base Foundation Toe (El. +580m)"];
+  
+  const alertMap = {
+    "DAM_TEHRI": { "1,5": { status: "WATCH", crack: 1.2, strain: 420, seepage: 2.1, name: "Spillway Pier Monolith #6" } },
+    "DAM_TAPOVAN": { "2,3": { status: "CRITICAL", crack: 2.8, strain: 840, seepage: 6.8, name: "Head Race Intake Block #4" }, "3,2": { status: "WATCH", crack: 1.6, strain: 510, seepage: 3.4, name: "Drainage Gallery Block #3" } },
+    "DAM_RANGANADI": { "1,4": { status: "CRITICAL", crack: 3.4, strain: 960, seepage: 9.5, name: "Spillway Gate #4 Chute Wall" }, "2,4": { status: "WATCH", crack: 1.9, strain: 530, seepage: 4.1, name: "Energy Dissipator Block #5" } },
+    "DAM_SUBANSIRI": { "3,4": { status: "WATCH", crack: 1.6, strain: 460, seepage: 2.8, name: "Diversion Tunnel Plug Block #5" } },
+    "DAM_KURICHHU": { "1,3": { status: "WATCH", crack: 1.1, strain: 360, seepage: 1.9, name: "Right Abutment Monolith #4" } }
+  };
+
+  const damAlerts = alertMap[damId] || {};
+  const grid = [];
+
+  for (let r = 0; r < rows; r++) {
+    const rowNodes = [];
+    for (let c = 0; c < cols; c++) {
+      const key = `${r},${c}`;
+      if (damAlerts[key]) {
+        const a = damAlerts[key];
+        rowNodes.push({
+          node_id: `NODE_R${r+1}_C${c+1}`,
+          row: r, col: c,
+          level_name: levelNames[r],
+          block_name: a.name,
+          status: a.status,
+          crack_displacement_mm: a.crack,
+          strain_microstrain: a.strain,
+          seepage_lps: a.seepage
+        });
+      } else {
+        rowNodes.push({
+          node_id: `NODE_R${r+1}_C${c+1}`,
+          row: r, col: c,
+          level_name: levelNames[r],
+          block_name: `Monolith Block #${c+1} (${levelNames[r].split('(')[0].trim()})`,
+          status: "NORMAL",
+          crack_displacement_mm: 0.0,
+          strain_microstrain: Math.round(110 + (r * 18) + (c * 7)),
+          seepage_lps: +(0.1 + (r * 0.08)).toFixed(2)
+        });
+      }
+    }
+    grid.push(rowNodes);
+  }
+
+  return { dam_id: damId, rows, cols, grid };
+}
+
+function renderDamSensorGrid(gridData) {
+  const tbody = document.getElementById("dam-sensor-grid-body");
+  if (!tbody || !gridData?.grid) return;
+
+  tbody.innerHTML = "";
+
+  gridData.grid.forEach((rowNodes, rIdx) => {
+    const tr = document.createElement("tr");
+
+    const th = document.createElement("th");
+    th.style.textAlign = "left";
+    th.style.fontSize = "0.75rem";
+    th.style.color = "#94a3b8";
+    th.style.fontWeight = "600";
+    th.textContent = rowNodes[0]?.level_name || `Level ${rIdx + 1}`;
+    tr.appendChild(th);
+
+    rowNodes.forEach((node) => {
+      const td = document.createElement("td");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `grid-node-btn ${node.status === 'CRITICAL' ? 'node-critical' : (node.status === 'WATCH' ? 'node-watch' : 'node-normal')}`;
+      btn.setAttribute("title", `${node.block_name} (${node.status}): ${node.strain_microstrain}με`);
+      btn.setAttribute("data-row", node.row);
+      btn.setAttribute("data-col", node.col);
+
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".grid-node-btn").forEach(b => b.classList.remove("node-selected"));
+        btn.classList.add("node-selected");
+        selectDamGridNode(node);
+      });
+
+      td.appendChild(btn);
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  // Auto-select first active alert node or default node
+  let defaultNode = null;
+  for (const r of gridData.grid) {
+    const alertNode = r.find(n => n.status !== "NORMAL");
+    if (alertNode) { defaultNode = alertNode; break; }
+  }
+  if (!defaultNode && gridData.grid[1]) defaultNode = gridData.grid[1][4];
+  if (defaultNode) {
+    selectDamGridNode(defaultNode);
+    setTimeout(() => {
+      const b = document.querySelector(`.grid-node-btn[data-row="${defaultNode.row}"][data-col="${defaultNode.col}"]`);
+      if (b) b.classList.add("node-selected");
+    }, 80);
+  }
+}
+
+function selectDamGridNode(node) {
+  const titleEl = document.getElementById("node-detail-title");
+  const subEl = document.getElementById("node-detail-sub");
+  const strainEl = document.getElementById("node-strain-val");
+  const crackEl = document.getElementById("node-crack-val");
+  const seepageEl = document.getElementById("node-seepage-val");
+  const statusEl = document.getElementById("node-status-val");
+  const iconEl = document.getElementById("node-badge-icon");
+
+  if (titleEl) titleEl.textContent = `Selected: Node [R${node.row + 1}, C${node.col + 1}] — ${node.block_name}`;
+  if (subEl) subEl.textContent = `Gallery: ${node.level_name} · Sensor Type: Fiber Optic FBG Strain Sensor (ID: ${node.node_id})`;
+  if (strainEl) strainEl.textContent = `${node.strain_microstrain} με`;
+  if (crackEl) crackEl.textContent = `${node.crack_displacement_mm} mm`;
+  if (seepageEl) seepageEl.textContent = `${node.seepage_lps} L/sec`;
+  
+  if (statusEl) {
+    statusEl.textContent = node.status;
+    statusEl.style.color = node.status === 'CRITICAL' ? '#ef4444' : (node.status === 'WATCH' ? '#f59e0b' : '#22c55e');
+  }
+
+  if (iconEl) {
+    if (node.status === 'CRITICAL') {
+      iconEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
+      iconEl.style.background = "rgba(239, 68, 68, 0.25)";
+      iconEl.style.borderColor = "#ef4444";
+      iconEl.style.color = "#ef4444";
+    } else if (node.status === 'WATCH') {
+      iconEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i>`;
+      iconEl.style.background = "rgba(245, 158, 11, 0.25)";
+      iconEl.style.borderColor = "#f59e0b";
+      iconEl.style.color = "#f59e0b";
+    } else {
+      iconEl.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+      iconEl.style.background = "rgba(34, 197, 94, 0.25)";
+      iconEl.style.borderColor = "#22c55e";
+      iconEl.style.color = "#22c55e";
+    }
+  }
+
+  const focusBtn = document.getElementById("btn-focus-opencv-node");
+  if (focusBtn) {
+    focusBtn.onclick = () => {
+      document.querySelector(".dam-opencv-col")?.scrollIntoView({ behavior: "smooth" });
+      runOpencvWallInspection();
+    };
+  }
 }
 
 async function triggerDamSimulation() {
