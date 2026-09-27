@@ -518,10 +518,13 @@ async function showWeatherForecastPage(params) {
   currentPredictionParams = { ...currentPredictionParams, ...params };
   const { state, district, basinId, basinLabel, date, area, time, lead } = currentPredictionParams;
 
-  document.getElementById("home")?.classList.add("hidden");
-  document.getElementById("results-panel")?.classList.add("hidden");
+  const home = document.getElementById("home");
+  const resPanel = document.getElementById("results-panel");
   const wfPanel = document.getElementById("weather-forecast-panel");
-  if (wfPanel) wfPanel.classList.remove("hidden");
+
+  if (home) { home.classList.add("hidden"); home.style.display = "none"; }
+  if (resPanel) { resPanel.classList.add("hidden"); resPanel.style.display = "none"; }
+  if (wfPanel) { wfPanel.classList.remove("hidden"); wfPanel.style.display = "block"; }
 
   // Meta badges
   const locEl = document.getElementById("wf-loc-text");
@@ -646,9 +649,14 @@ async function showWeatherForecastPage(params) {
 }
 
 function showResultsPage(state, district, basinLabel) {
-  document.getElementById("home")?.classList.add("hidden");
-  document.getElementById("weather-forecast-panel")?.classList.add("hidden");
-  document.getElementById("results-panel")?.classList.remove("hidden");
+  const home = document.getElementById("home");
+  const wfPanel = document.getElementById("weather-forecast-panel");
+  const resPanel = document.getElementById("results-panel");
+
+  if (home) { home.classList.add("hidden"); home.style.display = "none"; }
+  if (wfPanel) { wfPanel.classList.add("hidden"); wfPanel.style.display = "none"; }
+  if (resPanel) { resPanel.classList.remove("hidden"); resPanel.style.display = "block"; }
+
   document.getElementById("result-location-badge").textContent = `${state} · ${district} · ${basinLabel}`;
   window.scrollTo({ top: 0, behavior: "instant" });
   // Unlock post-prediction drawer nav items
@@ -658,9 +666,13 @@ function showResultsPage(state, district, basinLabel) {
 }
 
 function showHomePage() {
-  document.getElementById("weather-forecast-panel")?.classList.add("hidden");
-  document.getElementById("results-panel")?.classList.add("hidden");
-  document.getElementById("home")?.classList.remove("hidden");
+  const home = document.getElementById("home");
+  const wfPanel = document.getElementById("weather-forecast-panel");
+  const resPanel = document.getElementById("results-panel");
+
+  if (wfPanel) { wfPanel.classList.add("hidden"); wfPanel.style.display = "none"; }
+  if (resPanel) { resPanel.classList.add("hidden"); resPanel.style.display = "none"; }
+  if (home) { home.classList.remove("hidden"); home.style.display = "block"; }
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 
